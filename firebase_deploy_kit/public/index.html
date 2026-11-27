@@ -1044,26 +1044,26 @@ Signing authority rests with <span class="ph2">[PERSON_1]</span> in the capacity
   window.addEventListener('online',  () => say('Back online — queued receipts sync to Firestore'));
 })();
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
-/* \ud83d\udcf1 Install on phone \u2014 QR handoff: a persistent corner pill; clicking it
-   opens a modal with a QR of the live URL (deploy-first hint on file://, honest
-   text fallback when offline). Self-contained; uses the qrcode-generator CDN
-   lib, precached by the service worker. */
+/* \ud83d\udcf1 Install on phone \u2014 simple and dependency-free: a persistent corner pill;
+   clicking it opens plain install instructions (Android/iPhone steps), plus on
+   desktop the page URL in a one-tap copy box. No CDN library, works offline. */
 (function(){
   if(window.matchMedia('(display-mode: standalone)').matches) return;
   const isHttp = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  const coarse = window.matchMedia('(pointer: coarse)').matches;
   const css = document.createElement('style');
   css.textContent = [
     '.pim-modal{position:fixed;inset:0;z-index:1001;display:flex;align-items:center;justify-content:center;background:rgba(4,8,18,.72);padding:16px}',
-    '.pim-card{position:relative;width:min(92vw,380px);max-height:92vh;overflow:auto;background:#101830;color:#EAF0FF;border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:20px;box-shadow:0 18px 60px rgba(0,0,0,.5);font-family:inherit}',
+    '.pim-card{position:relative;width:min(92vw,400px);max-height:92vh;overflow:auto;background:#101830;color:#EAF0FF;border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:20px;box-shadow:0 18px 60px rgba(0,0,0,.5);font-family:inherit}',
     '.pim-card h3{margin:0 0 4px;font-size:17px}',
-    '.pim-sub{margin:0 0 14px;font-size:13px;opacity:.72}',
-    '.pim-qr{background:#fff;border-radius:12px;padding:12px;display:flex;justify-content:center;margin:0 0 14px}',
-    '.pim-qr svg{width:100%;max-width:240px;height:auto;display:block}',
-    '.pim-note{color:#3A4560;font-size:13px;text-align:center;margin:8px 4px}',
-    '.pim-steps{margin:0;padding-left:18px;font-size:13.5px;line-height:1.55}',
-    '.pim-steps code{background:rgba(255,255,255,.09);padding:1px 5px;border-radius:4px;font-size:12px;word-break:break-all}',
+    '.pim-sub{margin:0 0 12px;font-size:13px;opacity:.72}',
+    '.pim-url{display:flex;gap:8px;align-items:stretch;margin:0 0 12px}',
+    '.pim-url code{flex:1;background:#0A0F1E;border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:8px 10px;font-size:12px;word-break:break-all;color:#BFD4FF}',
+    '.pim-copy{border:0;background:#D64545;color:#fff;border-radius:8px;padding:8px 12px;font-weight:600;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap}',
+    '.pim-steps{margin:0;padding-left:18px;font-size:13.5px;line-height:1.6}',
+    '.pim-steps b{color:#fff}',
+    '.pim-note{margin:12px 0 0;font-size:12px;opacity:.65}',
     '.pim-x{position:absolute;top:8px;right:12px;border:0;background:none;color:#fff;font-size:22px;line-height:1;cursor:pointer;opacity:.6}',
     '.pim-x:hover{opacity:1}',
     '.pim-pill{position:fixed;left:18px;bottom:18px;z-index:1000;border:1px solid #D64545;background:#101830;color:#fff;border-radius:999px;padding:9px 14px;font-weight:600;font-size:13px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35);font-family:inherit}',
@@ -1077,54 +1077,51 @@ Signing authority rests with <span class="ph2">[PERSON_1]</span> in the capacity
     modal = document.createElement('div');
     modal.className = 'pim-modal';
     modal.setAttribute('role', 'dialog');
-    modal.innerHTML = '<div class="pim-card">' +
-      '<button class="pim-x" aria-label="Close">\u00d7</button>' +
-      '<h3>Install on your phone</h3>' +
-      '<p class="pim-sub">Same app, full offline pipeline \u2014 in your pocket.</p>' +
-      '<div class="pim-qr"><p class="pim-note">Loading\u2026</p></div>' +
-      '<ol class="pim-steps">' +
-      '<li>Scan with your phone camera (or open the link).</li>' +
-      '<li>Tap <b>\u2b07 Install app</b> / <b>Add to Home Screen</b> in the phone browser.</li>' +
-      '<li>Open it from the icon \u2014 <code>https</code> only, never a downloaded file.</li>' +
-      '</ol></div>';
+    let body = '';
+    if(coarse){
+      body = '<h3>Install on your phone</h3>' +
+        '<p class="pim-sub">Add Redline to your home screen \u2014 it then opens full-screen and runs offline.</p>' +
+        '<ol class="pim-steps">' +
+        '<li><b>Android (Chrome):</b> tap the \u2b07 <b>Install app</b> button in this app, or browser menu \u22ee \u2192 <b>Install app / Add to Home screen</b>.</li>' +
+        '<li><b>iPhone (Safari):</b> tap <b>Share</b> \u2192 <b>Add to Home Screen</b>.</li>' +
+        '<li>Open Redline from the new icon \u2014 after one online visit it keeps working in airplane mode.</li>' +
+        '</ol>' +
+        '<p class="pim-note">Install works from the hosted https page \u2014 never from a downloaded file.</p>';
+    }else{
+      const urlBox = isHttp
+        ? '<div class="pim-url"><code id="pimLink">' + location.href + '</code><button class="pim-copy" id="pimCopyBtn">Copy link</button></div>'
+        : '';
+      body = '<h3>Install on your phone</h3>' +
+        '<p class="pim-sub">Send this exact link to your phone, then add it to the home screen.</p>' +
+        urlBox +
+        '<ol class="pim-steps">' +
+        '<li>Open the link on your phone \u2014 send it to yourself (WhatsApp, email, chat) or type it in the browser.</li>' +
+        '<li>In the phone browser choose <b>Install app</b> (Android) or <b>Share \u2192 Add to Home Screen</b> (iPhone).</li>' +
+        '<li>Open Redline from the icon \u2014 after one online visit it works offline.</li>' +
+        '</ol>';
+    }
+    modal.innerHTML = '<div class="pim-card"><button class="pim-x" aria-label="Close">\u00d7</button>' + body + '</div>';
     document.body.appendChild(modal);
     modal.addEventListener('click', e => { if(e.target === modal) close(); });
     modal.querySelector('.pim-x').addEventListener('click', close);
+    const cb = modal.querySelector('#pimCopyBtn');
+    if(cb) cb.addEventListener('click', () => {
+      const txt = modal.querySelector('#pimLink').textContent;
+      const done = () => { cb.textContent = 'Copied \u2713'; setTimeout(() => { cb.textContent = 'Copy link'; }, 1600); };
+      if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done).catch(() => {});
+      else{ const r = document.createRange(); r.selectNode(modal.querySelector('#pimLink')); getSelection().removeAllRanges(); getSelection().addRange(r); done(); }
+    });
   }
-  function fill(){
-    const box = modal.querySelector('.pim-qr');
-    if(!isHttp){
-      box.innerHTML = '<p class="pim-note">This page runs from a <b>local file</b>, so there is nothing to scan yet.<br>Deploy first (<code>firebase deploy</code> \u2014 DEPLOY.md \u00a71),<br>reopen this page, then tap \ud83d\udcf1 for the QR.</p>';
-      return;
-    }
-    if(!window.qrcode){
-      box.innerHTML = '<p class="pim-note">QR unavailable (offline first visit).<br>Open this URL on your phone:<br><code>' + location.href + '</code></p>';
-      return;
-    }
-    try{
-      const qr = window.qrcode(0, 'M');
-      qr.addData(location.href);
-      qr.make();
-      box.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 8 });
-    }catch(err){
-      box.innerHTML = '<p class="pim-note">QR failed \u2014 open this URL on your phone:<br><code>' + location.href + '</code></p>';
-    }
-  }
-  function open(){
-    if(!modal) build();
-    fill();
-    modal.style.display = 'flex';
-  }
+  function open(){ if(!modal) build(); modal.style.display = 'flex'; }
   function close(){ if(modal) modal.style.display = 'none'; }
   document.addEventListener('keydown', e => { if(e.key === 'Escape') close(); });
 
   const pill = document.createElement('button');
   pill.className = 'pim-pill';
   pill.textContent = '\ud83d\udcf1 Install on phone';
-  pill.setAttribute('aria-label', 'Install on phone \u2014 show QR');
+  pill.setAttribute('aria-label', 'Install on phone \u2014 show instructions');
   pill.addEventListener('click', open);
   document.body.appendChild(pill);
-
 })();
 </script>
 
