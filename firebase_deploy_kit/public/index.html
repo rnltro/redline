@@ -882,6 +882,30 @@ Signing authority rests with <span class="ph2">[PERSON_1]</span> in the capacity
     dl(makeZip(files),'redline_android_project_'+stamp()+'.zip');
   });
   /* ---- extraction pipeline per file type ---- */
+  /* ---- upload hardening (defense-in-depth for untrusted files) ----
+     • extension whitelist + per-type size caps (rejection is honest, not silent)
+     • PDF: font/PostScript eval disabled (isEvalSupported:false); page count capped
+     • images + scanned-page renders: megapixel canvas cap (decompression-bomb guard)
+     • parsed text sanitized at the single choke point: C0 control chars stripped
+     • ReDoS-safe scanner: every quantifier bounded or on disjoint char classes;
+       values capped at 90 chars, findings capped at 24                         */
+  const SEC={MAX_BYTES:30*1024*1024,LIMITS:{pdf:25*1024*1024,docx:10*1024*1024,txt:2*1024*1024,img:15*1024*1024},MAX_PDF_PAGES:40,MAX_CANVAS_MP:12};
+  function validateFile(f){
+    const n=(f.name||'').toLowerCase();
+    const okExt=/\.(pdf|docx|doc|txt|md|png|jpe?g|webp|bmp)$/.test(n);
+    const okMime=/^(application\/pdf|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document|text\/plain|text\/markdown|image\/(png|jpeg|webp|bmp))$/.test(f.type||'');
+    if(!okExt&&!okMime)throw new Error('Unsupported file type — use PDF, DOCX, TXT/MD, PNG/JPG/WEBP/BMP.');
+    if(f.size>SEC.MAX_BYTES)throw new Error('File too large (max 30 MB).');
+    const lim=/\.pdf$/.test(n)||f.type==='application/pdf'?SEC.LIMITS.pdf:/\.(docx|doc)$/.test(n)?SEC.LIMITS.docx:/\.(png|jpe?g|webp|bmp)$/.test(n)||/^image\//.test(f.type||'')?SEC.LIMITS.img:SEC.LIMITS.txt;
+    if(f.size>lim)throw new Error('File too large for this type (max '+fmtSize(lim)+'). Split it or pick a smaller file.');
+  }
+  function sanitizeText(t){return String(t).replace(/[\u0000-\u0008\u000B-\u001F\u007F]/g,'');}
+  function cappedViewport(pg,scale){
+    const vp=pg.getViewport({scale:scale});
+    const mp=(vp.width*vp.height)/1e6;
+    if(mp<=SEC.MAX_CANVAS_MP)return vp;
+    return pg.getViewport({scale:scale*Math.sqrt(SEC.MAX_CANVAS_MP/mp)});
+  }
   async function ocrImage(source){
     if(!window.Tesseract)throw new Error('OCR engine unavailable (offline?) — use a text-based PDF/DOCX/TXT or the sample');
     const r=await Tesseract.recognize(source,'eng');
@@ -892,11 +916,13 @@ Signing authority rests with <span class="ph2">[PERSON_1]</span> in the capacity
     fcMeta.style.color='';fileCard.hidden=false;fcName.textContent=f.name;
     parseBar.classList.remove('run');void parseBar.offsetWidth;parseBar.classList.add('run');
     try{
+      validateFile(f);
       let text='',pages=1,src='text layer';
       if(/\.pdf$/i.test(f.name)||f.type==='application/pdf'){
         if(!window.pdfjsLib)throw new Error('PDF engine unavailable (offline?) — try a TXT file or the sample');
-        const pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;
-        pages=pdf.numPages;const parts=[];
+        const pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer(),isEvalSupported:false}).promise;
+        pages=Math.min(pdf.numPages,SEC.MAX_PDF_PAGES);const parts=[];
+        if(pdf.numPages>SEC.MAX_PDF_PAGES)fcMeta.textContent=fmtSize(f.size)+' · big PDF — scanning first '+SEC.MAX_PDF_PAGES+' of '+pdf.numPages+' pages';
         for(let i=1;i<=pages;i++){
           fcMeta.textContent=fmtSize(f.size)+' · extracting text (page '+i+'/'+pages+')…';
           const pg=await pdf.getPage(i),tc=await pg.getTextContent();
@@ -907,7 +933,7 @@ Signing authority rests with <span class="ph2">[PERSON_1]</span> in the capacity
           src='OCR · scanned pages';
           for(let i=1;i<=pages;i++){
             fcMeta.textContent=fmtSize(f.size)+' · no text layer — OCR on device (page '+i+'/'+pages+')…';
-            const pg=await pdf.getPage(i),vp=pg.getViewport({scale:2});
+            const pg=await pdf.getPage(i),vp=cappedViewport(pg,2);
             const cnv=document.createElement('canvas');
             cnv.width=Math.round(vp.width);cnv.height=Math.round(vp.height);
             await pg.render({canvasContext:cnv.getContext('2d'),viewport:vp}).promise;
@@ -923,10 +949,16 @@ Signing authority rests with <span class="ph2">[PERSON_1]</span> in the capacity
         src='OCR · image';
         pages=1;
         fcMeta.textContent=fmtSize(f.size)+' · OCR on device (Tesseract, eng)…';
-        text=await ocrImage(f);
+        let bmp;try{bmp=await createImageBitmap(f);}catch(e){throw new Error('Image could not be decoded — it may be corrupt or is not a real image.');}
+        const k=Math.min(1,Math.sqrt(SEC.MAX_CANVAS_MP/((bmp.width*bmp.height)/1e6)));
+        const cnv=document.createElement('canvas');
+        cnv.width=Math.max(1,Math.round(bmp.width*k));cnv.height=Math.max(1,Math.round(bmp.height*k));
+        cnv.getContext('2d').drawImage(bmp,0,0,cnv.width,cnv.height);
+        text=await ocrImage(cnv);
       }else{
         text=await f.text();
       }
+      text=sanitizeText(text);
       const words=(text.match(/\S+/g)||[]).length;
       if(words<5)throw new Error('Still no readable text after OCR — try a sharper image or a text-based file, or use the sample contract.');
       fcMeta.textContent=fmtSize(f.size)+' · scanning entities locally…';
@@ -1012,6 +1044,90 @@ Signing authority rests with <span class="ph2">[PERSON_1]</span> in the capacity
   window.addEventListener('online',  () => say('Back online — queued receipts sync to Firestore'));
 })();
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+/* \ud83d\udcf1 Install on phone \u2014 QR handoff: a persistent corner pill; clicking it
+   opens a modal with a QR of the live URL (deploy-first hint on file://, honest
+   text fallback when offline). Self-contained; uses the qrcode-generator CDN
+   lib, precached by the service worker. */
+(function(){
+  if(window.matchMedia('(display-mode: standalone)').matches) return;
+  const isHttp = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  const css = document.createElement('style');
+  css.textContent = [
+    '.pim-modal{position:fixed;inset:0;z-index:1001;display:flex;align-items:center;justify-content:center;background:rgba(4,8,18,.72);padding:16px}',
+    '.pim-card{position:relative;width:min(92vw,380px);max-height:92vh;overflow:auto;background:#101830;color:#EAF0FF;border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:20px;box-shadow:0 18px 60px rgba(0,0,0,.5);font-family:inherit}',
+    '.pim-card h3{margin:0 0 4px;font-size:17px}',
+    '.pim-sub{margin:0 0 14px;font-size:13px;opacity:.72}',
+    '.pim-qr{background:#fff;border-radius:12px;padding:12px;display:flex;justify-content:center;margin:0 0 14px}',
+    '.pim-qr svg{width:100%;max-width:240px;height:auto;display:block}',
+    '.pim-note{color:#3A4560;font-size:13px;text-align:center;margin:8px 4px}',
+    '.pim-steps{margin:0;padding-left:18px;font-size:13.5px;line-height:1.55}',
+    '.pim-steps code{background:rgba(255,255,255,.09);padding:1px 5px;border-radius:4px;font-size:12px;word-break:break-all}',
+    '.pim-x{position:absolute;top:8px;right:12px;border:0;background:none;color:#fff;font-size:22px;line-height:1;cursor:pointer;opacity:.6}',
+    '.pim-x:hover{opacity:1}',
+    '.pim-pill{position:fixed;left:18px;bottom:18px;z-index:1000;border:1px solid #D64545;background:#101830;color:#fff;border-radius:999px;padding:9px 14px;font-weight:600;font-size:13px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35);font-family:inherit}',
+    '.pim-pill:hover{background:#1A2440}',
+    '@media (max-width:640px){.pim-pill{left:12px;bottom:12px;padding:7px 11px;font-size:12px}}'
+  ].join('\n');
+  document.head.appendChild(css);
+
+  let modal = null;
+  function build(){
+    modal = document.createElement('div');
+    modal.className = 'pim-modal';
+    modal.setAttribute('role', 'dialog');
+    modal.innerHTML = '<div class="pim-card">' +
+      '<button class="pim-x" aria-label="Close">\u00d7</button>' +
+      '<h3>Install on your phone</h3>' +
+      '<p class="pim-sub">Same app, full offline pipeline \u2014 in your pocket.</p>' +
+      '<div class="pim-qr"><p class="pim-note">Loading\u2026</p></div>' +
+      '<ol class="pim-steps">' +
+      '<li>Scan with your phone camera (or open the link).</li>' +
+      '<li>Tap <b>\u2b07 Install app</b> / <b>Add to Home Screen</b> in the phone browser.</li>' +
+      '<li>Open it from the icon \u2014 <code>https</code> only, never a downloaded file.</li>' +
+      '</ol></div>';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if(e.target === modal) close(); });
+    modal.querySelector('.pim-x').addEventListener('click', close);
+  }
+  function fill(){
+    const box = modal.querySelector('.pim-qr');
+    if(!isHttp){
+      box.innerHTML = '<p class="pim-note">This page runs from a <b>local file</b>, so there is nothing to scan yet.<br>Deploy first (<code>firebase deploy</code> \u2014 DEPLOY.md \u00a71),<br>reopen this page, then tap \ud83d\udcf1 for the QR.</p>';
+      return;
+    }
+    if(!window.qrcode){
+      box.innerHTML = '<p class="pim-note">QR unavailable (offline first visit).<br>Open this URL on your phone:<br><code>' + location.href + '</code></p>';
+      return;
+    }
+    try{
+      const qr = window.qrcode(0, 'M');
+      qr.addData(location.href);
+      qr.make();
+      box.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 8 });
+    }catch(err){
+      box.innerHTML = '<p class="pim-note">QR failed \u2014 open this URL on your phone:<br><code>' + location.href + '</code></p>';
+    }
+  }
+  function open(){
+    if(!modal) build();
+    fill();
+    modal.style.display = 'flex';
+  }
+  function close(){ if(modal) modal.style.display = 'none'; }
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') close(); });
+
+  const pill = document.createElement('button');
+  pill.className = 'pim-pill';
+  pill.textContent = '\ud83d\udcf1 Install on phone';
+  pill.setAttribute('aria-label', 'Install on phone \u2014 show QR');
+  pill.addEventListener('click', open);
+  document.body.appendChild(pill);
+
+})();
+</script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
