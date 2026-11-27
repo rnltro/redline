@@ -1,49 +1,124 @@
-# Deliverables — Confidential Document Copilot (Redline)
+# Redline — Redact first, ask later
 
-For the **#BuildHybridAI 2026** hackathon (Firebase Hybrid AI, Devpost).
+**The confidential-document copilot that never sees your real text.** Redline
+finds the sensitive entities in any document, replaces them with typed
+placeholders, and only sends *those* to the AI — with an append-only receipt
+proving where every stage ran and what was sent. Built with **Firebase AI Logic
+hybrid inference** for the **#BuildHybridAI** hackathon.
 
-## Files
+> Most AI workflows paste contracts straight into a model: names, amounts,
+> client terms — one paste, and they're on someone else's server. Redline
+> flips the order: **redact first, ask later.**
 
-| File | What it is |
-|---|---|
+---
 
-| `redline_app_preview.html` | 5-screen app preview (single file, zero build step). **Responsive — fits a phone** (sidebar collapses, columns stack, tables scroll in place; tested at 375px with zero horizontal overflow). Unified navigation — left sidebar and top stepper mirror the same 5 steps: Upload → Scan on device → Consent gate → Cloud answer → Receipt — and every screen has a "WHAT HAPPENS HERE" strip. **Upload is real end to end**: PDFs are parsed with pdf.js and DOCX with mammoth (CDN, loaded on the page), TXT/MD read directly; a local entity scanner (deterministic, in-tab) finds the document's real names, organizations, amounts, dates, emails and titles → typed placeholders; the Scan screen shows the real redacted excerpt and findings, the Consent gate shows the real values vs placeholders with a live mapping table, the Answer restores the real values locally, and the Receipt shows real counts (words/chunks/entities/tokens). The sample button still runs clearly-labeled demo data. **Stage 5's exports are real, not decoration**: *Download audit log (.json)* exports a structured audit log whose entity list contains placeholders and reasons only — zero real values; *Export redlined DOCX* builds a valid OOXML file of the redacted text byte-by-byte in a client-side zip writer; *Android build* downloads a compilable Android WebView project (Gradle + manifest + MainActivity + the app itself bundled as `assets/index.html` + App Distribution instructions). All three verified downloading in Playwright. The **INFERENCE MODE cards are clickable** and the choice steers the pipeline: airplane mode runs the answer on device (the Receipt's stage-3 chip flips to "On device"), cloud-only moves Stage 1 to the cloud — verified with touch taps on a phone-sized viewport (390×844), including the three exports firing real downloads on touch taps. The cards are **native radio inputs — they still select with JavaScript disabled** (sandboxed in-app "Preview" viewers), the first screen is statically visible without JS, and a `<noscript>` banner (plus an embedded-viewer notice) tells you to open the file in Chrome for uploads, AI and downloads. Images (PNG/JPG/JPEG/WEBP/BMP) and scanned PDFs with **no text layer now run through on-device OCR** (Tesseract.js 5.1.1 from CDN, English — still zero bytes uploaded): each scanned page renders to canvas via pdf.js at 2× scale, OCR text feeds the same local scanner, the consent gate shows what OCR actually read, and the answer cites `source: OCR · on device` (verified end-to-end: scanned-PNG NDA → 12 entities / all 6 types; image-only PDF → 9 entities; see `scripts/verify_ocr.py` and `redline_preview_screens/ocr_scan_screen.png`). Genuinely unreadable images still fail with an honest message. The app is a **full installable PWA** (manifest + service worker, registering over https/localhost; silently inert on file://): after one online visit it reloads and runs with the radio off — TXT/PDF/DOCX and on-device OCR included — and an **⬇ Install app** button appears when the browser offers install. Verified 14/14 in `scripts/verify_pwa.py`, including offline reload, offline PDF parse (16 findings) and offline OCR (12 findings) with zero page errors. |<br><br>
-| `redline_app_connected.html` | **Firebase-connected version of the same app.** Same 5 screens and the same real PDF/DOCX/TXT processing — plus the same on-device OCR path for images and scanned PDFs — plus: real Firebase SDK v12.5.0 (CDN, no build step), Google sign-in, trust receipts written to Firestore (`users/{uid}/receipts`, append-only) with the real per-document counts, and real AI Logic calls — Stage 1 hybrid structured extraction (`PREFER_ON_DEVICE` + JSON schema, fed the real uploaded text) and Stage 3 cloud answer on the real redacted placeholder text (`PREFER_IN_CLOUD`) re-hydrated locally. **App Check initializes at connect** — a reCAPTCHA v3 site key, or the challenge-accepted debug-token flow (`?fb_appCheckDebugToken=…`; the status card labels it `App Check: debug token (submission mode)`); **Remote Config** tunes `scan_max_findings` / `cloud_model` / `gate_full_text` live (fetched + activated at connect, embedded defaults keep demo mode identical, status card reports exactly what is live). With no config it runs in **demo mode** (amber "DEMO DATA" pill); fill `FIREBASE_CONFIG` at the top of its script or open with `?fb_apiKey=…&fb_projectId=…&fb_appId=…` URL params to go live (green "LIVE · Firebase" pill). Stage 5's exports are real here too: audit-log JSON (placeholders only), a valid client-side-built redlined DOCX, and the compilable Android WebView project zip — all verified downloading in Playwright. The inference mode cards are clickable here too (native radios, JS-off safe) and pass the real InferenceMode to Firebase AI Logic (airplane mode → PREFER_ON_DEVICE for the answer, cloud-only → PREFER_IN_CLOUD for extraction); the three exports fire real downloads on touch taps. Installable PWA as well, and **Firestore receipts are offline-persistent** (`persistentLocalCache` + multi-tab manager): a receipt approved in airplane mode is queued in IndexedDB and syncs automatically on reconnect — the toast states which path happened. Offline reload + offline scan verified in `scripts/verify_pwa.py`. |<br><br>
-| `sample_contract.pdf` · `sample_agreement.docx` · `sample_nda.pdf` · `sample_employment.docx` · `sample_brief.txt` | **Five ready-to-upload demo documents** — one per format (PDF ×2, DOCX ×2, TXT), fictional parties, all 6 entity types present (persons, organizations, amounts, dates, emails, titles): a 2-page consulting agreement (Silverline ↔ Cordova Trading & Logistics), a master services agreement (Harborview ↔ Tala Digital), a mutual NDA (Quintana Robotics ↔ Del Rosario Fabrication), an employment contract (Marisol Media), and a co-packing project brief (Bituin Foods ↔ Sari-Saya). Drop any of them into the Upload step — the app parses and scans them for real; verified end-to-end (12/12 target entities surfaced on both builds, emails stay hidden on the Scan screen, the Consent gate shows every real value). |<br><br>
-| `sample_scan_nda.png` · `sample_scan_contract.pdf` | **Scanned-document samples for the OCR pipeline** — a photographed NDA (PNG) and an image-only PDF (no text layer, verified with pdftotext). Both flow through the app's on-device OCR and then the local scanner: the PNG surfaces 12 entities across all 6 types, the PDF 9; the receipt cites `source: OCR · on device`. Live proof in `redline_preview_screens/ocr_scan_screen.png`. |<br><br>
-| `firebase_deploy_kit/` | Deploy-ready Firebase config: `firebase.json`, `.firebaserc`, `apphosting.yaml` (Next.js App Hosting), `firestore.rules` (owner-scoped, append-only receipts, default-deny), `firestore.indexes.json`, and `public/` deploy-ready: `index.html` (the preview) + `connected.html` + the PWA assets (`manifest.webmanifest`, `sw.js`, `icons/`), plus `DEPLOY.md` — the full step-by-step runbook (hosting routes, App Check incl. the debug-token submission mode, Remote Config parameters, Auth, App Distribution, **PWA §8: install + airplane mode**, judge-day checklist). |<br><br>
-| `proof_redlined_from_pdf.docx` | **Zero-leak proof artifact**: the actual DOCX produced by tapping *Export redlined DOCX* on `sample_contract.pdf` in Playwright. Unpacked and inspected — valid OOXML (Content_Types, document.xml, styles), placeholders present, and none of the contract's real party names (Silverline, Cordova, Delgado) survive. Open it in Word/Google Docs to see the export for yourself. |
+## How the hybrid pipeline works
 
-## Privacy architecture
+```
+┌─────────────────┐   ┌──────────────────┐   ┌───────────────────────────┐
+│ 1 · SCAN        │   │ 2 · CONSENT GATE │   │ 3 · HYBRID ANSWER         │
+│ 100% on device  │ → │ approve exactly  │ → │ Gemini Nano on device     │
+│ OCR + 6 entity  │   │ what may leave,  │   │ first; cloud Gemini 2.5   │
+│ types →         │   │ entity by entity │   │ Flash-Lite fallback —     │
+│ [PERSON_1]…     │   │ (the only door   │   │ placeholders only, never  │
+│                 │   │  out)            │   │ the original text         │
+└─────────────────┘   └──────────────────┘   └───────────────────────────┘
+                                   ↓
+                     ┌───────────────────────────┐
+                     │ 4 · RECEIPT (append-only) │
+                     │ where each stage ran,     │
+                     │ what was sent, the counts │
+                     └───────────────────────────┘
+```
 
-Document text is parsed, redacted and restored **entirely on device**. The
-cloud stage only ever sees approved placeholders (`[PERSON_1]`, `[AMOUNT_1]`…),
-and Firestore stores only matter metadata, the findings index and append-only
-trust receipts — never document text. "Every other entry asks you to trust the
-AI. Redline shows you the receipts."
+- **Scan** — `.txt`, `.md`, `.docx`, `.pdf`, and photos/scans of documents
+  (on-device Tesseract OCR). Finds **six entity types**: people, companies,
+  amounts, dates, emails, titles → typed placeholders like `[PERSON_1]`,
+  `[AMOUNT_1]`.
+- **Consent gate** — the real value and its placeholder, side by side. You
+  approve entity by entity. Nothing reaches the network without a green check.
+- **Hybrid inference** — Firebase AI Logic tries **Gemini Nano on device**
+  first (zero network); heavier questions fall back to **cloud Gemini 2.5
+  Flash-Lite**, which receives the approved placeholders only.
+- **Receipt** — append-only proof (where each stage ran / what was sent /
+  counts), exportable as `.json`; the redlined document exports as `.docx`.
 
-## Verification status
+## Try it — three ways
 
-- Connected app tested headless (Chromium): demo mode and configured mode both
-  load with zero page errors; approve-flow toasts are honest about what is
-  simulated vs persisted.
-- Full end-to-end with a real Firebase project needs your project values
-  (see `firebase_deploy_kit/DEPLOY.md`).
-- Guide-compliance smoke test (`scripts/verify_guide_compliance.py`): demo
-  mode loads with zero page errors; a fake-config + `fb_appCheckDebugToken`
-  run initializes App Check (`debug token (submission mode)`), fails soft to
-  Remote Config defaults with an honest status line, and uploads still scan.
+| Way | What you get |
+| --- | --- |
+| **Live demo** | Open the hosted `https://…` URL — nothing to install, no sign-up. *(paste your link here)* |
+| **Open locally** | Download/clone → open `redline_app_preview.html` in any browser. Full pipeline, demo mode, works offline. |
+| **Deploy yourself** | `cd firebase_deploy_kit && firebase use --add && firebase deploy --only hosting` — see `firebase_deploy_kit/DEPLOY.md` (10 minutes, free Spark plan). |
 
-## Challenge-guide compliance
+## Judge quick test (2 minutes)
 
-| Guide requirement | Status | Where |
-|---|---|---|
-| Gen AI app on **Firebase AI Logic** | ✓ real calls in the connected build | Stage 1 `PREFER_ON_DEVICE` structured extraction (JSON schema), Stage 3 `PREFER_IN_CLOUD` answer on placeholders — `redline_app_connected.html` |
-| **App Check** (required by AI Logic; debug tokens accepted) | ✓ | `initializeAppCheck` at connect — reCAPTCHA v3 site key or debug-token submission mode; DEPLOY.md §4 |
-| **Remote Config** | ✓ | 3 params (`scan_max_findings`, `cloud_model`, `gate_full_text`) fetched+activated at connect, fail-soft defaults; DEPLOY.md §5 |
-| **Firestore** | ✓ | append-only trust receipts, owner-scoped rules; `firestore.rules` |
-| **Authentication** | ✓ | Google sign-in; receipts stored per user |
-| **Web (Chrome)** — Gemini Nano via AI Logic | ✓ primary, verified platform | Web app (`PREFER_ON_DEVICE` routes to Gemini Nano where available); satisfies "web application" |
-| **Android** — Gemini Nano via AI Logic | ◐ partial | Compilable WebView app exports from Stage 5 + App Distribution runbook; a *native* Android AI Logic client is documented as roadmap (What's next) |
-| **iOS** — Apple Foundation Models | ✗ not built | Documented as roadmap; guide prefers (not requires) multi-platform |
-| Multi-platform "preferred" | ◐ | Web fully verified; Android app artifact + deploy path shipped |
+1. Drop any `.txt` / `.docx` / `.pdf` — or a **photo** of a contract (OCR kicks in).
+2. Watch the scan: typed placeholders replace every sensitive entity.
+3. Approve the gate, ask a question, read the answer.
+4. **Download audit log (.json)** — the receipt shows exactly what was sent: placeholders only.
+5. *Power move:* install on your phone (the **📱 Install on phone** pill has the steps),
+   scan once online, then **airplane mode** — it boots from cache, parses, even OCRs.
+
+**App Check note:** the connected build works without any keys — demo mode runs
+the same pipeline locally. To exercise the real Firebase AI path, register a
+debug token (Devpost rules accept debug tokens) or add a Fraud Defense site key.
+No secrets live in this repo; your config never leaves your machine.
+
+## Run with your own Firebase (optional)
+
+The connected build (`redline_app_connected.html`) imports the Firebase SDK and
+calls Firebase AI Logic, App Check, Remote Config and Firestore at runtime.
+It ships **placeholder-only config** (`REPLACE_ME`) — wire it either way:
+
+- paste your `firebaseConfig` into the `FIREBASE_CONFIG` block, or
+- open with `?fb_apiKey=…&fb_projectId=…&fb_appId=…`
+
+The kit in `firebase_deploy_kit/` ships `firebase.json`, Firestore rules
+(append-only receipts, default-deny), indexes, and a 10-minute deploy guide.
+
+## Privacy & security model
+
+- Document text is parsed, redacted and restored **entirely on device** — it is
+  never stored server-side.
+- Firestore stores **only** matter metadata, the findings *index* and receipts —
+  never document text. Rules: owner-only access, **append-only** receipts
+  (no update/delete), default-deny everywhere else.
+- App Check (Fraud Defense / debug-token submission mode) gates AI Logic + Firestore.
+- The service worker caches app shell + engines, **never** Firebase API calls.
+
+## Repo structure
+
+```
+redline_app_preview.html      # the app, demo mode — open in any browser
+redline_app_connected.html    # same app + live Firebase (placeholder config)
+sw.js · manifest.webmanifest  # PWA: offline boot, airplane-mode OCR
+icons/                        # 192 / 512 / maskable / apple-touch / favicon
+samples/                      # judge test files: brief/txt, contracts, photo scan for OCR
+firebase_deploy_kit/          # firebase.json, Firestore rules+indexes, DEPLOY.md
+scripts/                      # verification suites (Playwright) + icon generator
+```
+
+## Verification
+
+`scripts/` contains reproducible Playwright suites: upload security
+(malicious/oversized/path-trick files — 30 checks), phone-install flow
+(23 checks), PWA offline pipelines. They run headless against the shipped
+builds and are the fastest way to confirm the claims above.
+
+## Redaction benchmark
+
+`scripts/benchmark_redaction.py` scores the local scanner against hand-annotated
+ground truth on the bundled samples, through the real UI path — **precision 0.912,
+recall 1.000, F1 0.954** (64 entities, six types; raw results in
+`scripts/benchmark_results.json`). Every false positive over-redacts (a superset
+of the sensitive span near two-column signature blocks) rather than under-redacts:
+nothing annotated ever escapes redaction. Rerun it:
+`python3 scripts/benchmark_redaction.py`.
+
+## License
+
+Apache-2.0 — see [LICENSE](LICENSE).
+
+*Built for the #BuildHybridAI hackathon (Firebase Hybrid AI, Devpost) —
+Firebase AI Logic hybrid inference · App Check · Remote Config · Firestore · Hosting.*
