@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  :root {
+    --text: #1F2937;
+    --border: #D7DEE8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #FFFFFF; font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
+  #root {
+    width: 900px;
+    background: #FFFFFF;
+    padding: 36px 40px 28px 40px;
+  }
+  .flow-title {
+    font-size: 22px; font-weight: 700; color: #172540;
+    text-align: center; margin-bottom: 6px;
+  }
+  .flow-subtitle {
+    font-size: 13px; color: #64748B; text-align: center; margin-bottom: 24px;
+  }
+  .phase-group {
+    background: #F8FAFC; border-radius: 12px; padding: 18px 22px;
+    margin-bottom: 0;
+  }
+  .phase-title {
+    font-size: 16px; font-weight: 700; padding: 10px 16px;
+    border-radius: 8px; margin-bottom: 14px;
+  }
+  .phase-title .mode-chip {
+    display: inline-block; font-size: 11px; font-weight: 600;
+    padding: 2px 10px; border-radius: 999px; margin-left: 10px;
+    vertical-align: 2px;
+  }
+  .phase-steps { display: flex; flex-direction: column; gap: 8px; padding-left: 10px; }
+  .phase-step {
+    font-size: 14px; font-weight: 400; color: var(--text);
+    padding: 9px 14px; background: white; border-radius: 6px;
+    border: 1px solid var(--border);
+    line-height: 1.45;
+  }
+  .phase-step b { font-weight: 600; color: #1E3050; }
+  .phase-step .step-num {
+    display: inline-block; width: 22px; height: 22px; line-height: 22px;
+    text-align: center; border-radius: 50%; font-size: 12px; font-weight: 600;
+    margin-right: 8px;
+  }
+  .phase-note {
+    font-size: 12px; color: #64748B; margin-top: 12px; margin-left: 10px;
+    padding: 7px 12px; border-left: 3px solid #94A3B8; background: #FFFFFF;
+    border-radius: 0 6px 6px 0;
+  }
+  .phase-note b { color: #334155; font-weight: 600; }
+  .arrow {
+    text-align: center; color: #94A3B8; font-size: 22px;
+    margin: 6px 0; line-height: 1;
+  }
+  .arrow .arrow-label {
+    display: block; font-size: 11px; color: #64748B; letter-spacing: 0.4px;
+    margin-top: 2px;
+  }
+  /* Scheme A: blue-gray progression, 3 phases */
+  .phase-1 .phase-title { background: #F0F4F8; color: #334155; border-left: 4px solid #64748B; }
+  .phase-1 .step-num { background: #E2E8F0; color: #475569; }
+  .phase-1 .mode-chip { background: #E2E8F0; color: #334155; border: 1px solid #94A3B8; }
+  .phase-2 .phase-title { background: #E8EDF2; color: #1E3A5F; border-left: 4px solid #5B7A99; }
+  .phase-2 .step-num { background: #DBEAFE; color: #1E3A5F; }
+  .phase-2 .mode-chip { background: #DBEAFE; color: #1E3A5F; border: 1px solid #5B7A99; }
+  .phase-3 .phase-title { background: #E0E7EF; color: #1E3050; border-left: 4px solid #4A6B8A; }
+  .phase-3 .step-num { background: #D0D9E4; color: #1E3050; }
+  .phase-3 .mode-chip { background: #D0D9E4; color: #1E3050; border: 1px solid #4A6B8A; }
+</style>
+</head>
+<body>
+<div id="root">
+  <div class="flow-title">Redline &mdash; Hybrid Document Analysis Pipeline</div>
+  <div class="flow-subtitle">Firebase AI Logic hybrid inference &middot; on-device model as a privacy filter for the cloud model</div>
+
+  <div class="phase-group phase-1">
+    <div class="phase-title">Stage 1 &middot; On-Device Redaction
+      <span class="mode-chip">inference mode: prefer_on_device</span>
+    </div>
+    <div class="phase-steps">
+      <div class="phase-step"><span class="step-num">1</span><b>Intake</b> &mdash; the lawyer pastes or uploads the contract text inside the app.</div>
+      <div class="phase-step"><span class="step-num">2</span><b>Local extraction</b> &mdash; Gemini Nano (Chrome Prompt API) returns sensitive entities as structured JSON: client names, rates, dates, identifiers.</div>
+      <div class="phase-step"><span class="step-num">3</span><b>Redaction preview</b> &mdash; review-and-edit UI; the lawyer approves each redaction before anything else happens.</div>
+    </div>
+    <div class="phase-note"><b>Works offline.</b> No network call in this stage &mdash; this is the airplane-mode demo moment.</div>
+  </div>
+
+  <div class="arrow">&#8595;<span class="arrow-label">approved redacted draft, locally held</span></div>
+
+  <div class="phase-group phase-2">
+    <div class="phase-title">Stage 2 &middot; Consent Gate
+      <span class="mode-chip">no inference &middot; local audit</span>
+    </div>
+    <div class="phase-steps">
+      <div class="phase-step"><span class="step-num">4</span><b>"What leaves your device" panel</b> &mdash; shows the exact outbound payload character by character.</div>
+      <div class="phase-step"><span class="step-num">5</span><b>Explicit consent</b> &mdash; cloud analysis starts only after approval; refusal keeps everything local.</div>
+      <div class="phase-step"><span class="step-num">6</span><b>Audit log entry</b> written locally: what was sent, when, and which model ran it.</div>
+    </div>
+  </div>
+
+  <div class="arrow">&#8595;<span class="arrow-label">redacted text only &mdash; never the original</span></div>
+
+  <div class="phase-group phase-3">
+    <div class="phase-title">Stage 3 &middot; Cloud Analysis
+      <span class="mode-chip">inference mode: only_in_cloud</span>
+    </div>
+    <div class="phase-steps">
+      <div class="phase-step"><span class="step-num">7</span><b>Cloud pass</b> &mdash; Gemini Flash analyzes only the redacted text: clause risks, missing terms, plain-language summary.</div>
+      <div class="phase-step"><span class="step-num">8</span><b>Merge &amp; report</b> &mdash; findings are mapped back onto the original document held on-device; exportable report + audit trail.</div>
+    </div>
+    <div class="phase-note"><b>Fallback rule.</b> If Gemini Nano is unavailable (older device or browser), Stage 1 reroutes to the cloud model with a visible "cloud fallback" privacy notice &mdash; the user always knows where inference ran.</div>
+  </div>
+</div>
+</body>
+</html>
