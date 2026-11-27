@@ -1,0 +1,37 @@
+# ── Firebase: local state, project aliases, debug logs ──
+# (.firebaserc holds your personal project id — not a secret, but not for the repo)
+.firebase/
+.firebaserc
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+pubsub-debug.log
+
+# ── Secrets & keys — NEVER commit (hackathon rule: no keys in the repo) ──
+.env
+.env.*
+*.key
+*.pem
+serviceAccountKey*.json
+*firebase-adminsdk*.json
+credentials.json
+
+# ── Android build outputs (Stage 5 export) — build locally, ship via App Distribution ──
+*.apk
+*.aab
+*.keystore
+*.jks
+local.properties
+
+# ── Node ──
+node_modules/
+npm-debug.log*
+yarn-error.log
+
+# ── OS / editor noise ──
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp

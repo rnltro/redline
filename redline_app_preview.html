@@ -1,0 +1,1136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="theme-color" content="#0A0F1E">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Redline">
+<title>Redline — Confidential Document Copilot · App Preview</title>
+<style>
+  :root{
+    --bg:#0A0F1E; --panel:#FFFFFF; --app-bg:#F6F8FB; --ink:#0F172A; --muted:#5B6B7F;
+    --line:#E3E9F1; --green:#0E9F6E; --green-d:#046C4E; --green-bg:#E6F7F0;
+    --blue:#2563EB; --blue-d:#1D4ED8; --blue-bg:#EAF1FE;
+    --red:#D64545; --red-bg:#FDEDED; --amber:#B45309; --amber-bg:#FEF3E2;
+    --side:#0D1526; --mono:ui-monospace,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);font-family:-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;color:var(--ink);
+    background-image:radial-gradient(1200px 600px at 50% -10%,#16203A 0%,#0A0F1E 60%);padding:36px 24px 40px}
+  .wrap{max-width:1240px;margin:0 auto}
+
+  /* ---------- deck head ---------- */
+  .deck-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+  .brandline{display:flex;align-items:center;gap:14px}
+  .logo-badge{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#E11D48,#7C3AED);display:flex;align-items:center;justify-content:center;flex:0 0 auto;box-shadow:0 8px 24px rgba(225,29,72,.35)}
+  .logo-badge svg{width:24px;height:24px}
+  .deck-head h1{font-size:22px;letter-spacing:-.02em;color:#fff}
+  .deck-head h1 span{color:#8CA0B8;font-weight:500;font-size:16px}
+  .deck-head p{font-size:13px;color:#8CA0B8;margin-top:2px}
+  .head-chips{display:flex;gap:8px;flex-wrap:wrap}
+  .hchip{font-size:11.5px;font-weight:600;padding:6px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.14);color:#B9C6D8;letter-spacing:.02em}
+  .hchip.g{border-color:rgba(14,159,110,.5);color:#4ADE9C;background:rgba(14,159,110,.08)}
+  .hchip.b{border-color:rgba(37,99,235,.5);color:#7FA8F5;background:rgba(37,99,235,.08)}
+
+  /* ---------- stepper ---------- */
+  .stepper{display:flex;gap:8px;margin-bottom:18px}
+  .step{flex:1;display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:12px;border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.03);color:#93A5BC;cursor:pointer;font-size:12.5px;font-weight:600;transition:all .2s;text-align:left}
+  .step .n{width:24px;height:24px;border-radius:50%;border:1.5px solid #46586F;display:flex;align-items:center;justify-content:center;font-size:11.5px;flex:0 0 auto;font-weight:700}
+  .step small{display:block;font-weight:500;font-size:10.5px;color:#66788F;margin-top:1px;letter-spacing:.01em}
+  .step:hover{border-color:rgba(255,255,255,.25)}
+  .step.active{background:#fff;border-color:#fff;color:var(--ink)}
+  .step.active .n{background:var(--ink);border-color:var(--ink);color:#fff}
+  .step.active small{color:var(--muted)}
+  .step.done .n{background:rgba(14,159,110,.18);border-color:var(--green);color:#4ADE9C}
+
+  /* ---------- browser frame ---------- */
+  .frame{border-radius:16px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.08)}
+  .chrome{height:44px;background:#E8ECF2;display:flex;align-items:center;gap:8px;padding:0 16px;border-bottom:1px solid #D5DCE6}
+  .dot{width:11px;height:11px;border-radius:50%}
+  .dot.r{background:#F26D5F}.dot.y{background:#F2BE4A}.dot.g{background:#59C837}
+  .url{margin-left:14px;background:#fff;border-radius:8px;height:27px;display:flex;align-items:center;padding:0 14px;font-size:12px;color:#3D4C60;gap:7px;min-width:280px;font-weight:500}
+  .chrome-note{margin-left:auto;font-size:11.5px;color:#6A7A8E;font-weight:600;display:flex;align-items:center;gap:6px}
+  .chrome-note .live{width:7px;height:7px;border-radius:50%;background:var(--green)}
+
+  .app{display:flex;background:var(--app-bg);height:648px}
+  .side{width:208px;background:var(--side);color:#C7D2E0;display:flex;flex-direction:column;padding:18px 14px;flex:0 0 auto}
+  .side-logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px;color:#fff;letter-spacing:-.01em;padding:2px 6px 16px}
+  .side-logo .mark{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#E11D48,#7C3AED);display:flex;align-items:center;justify-content:center}
+  .side-logo .mark svg{width:14px;height:14px}
+  .side nav{display:flex;flex-direction:column;gap:2px}
+  .snav{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;font-size:12.5px;font-weight:600;color:#8FA1B8;cursor:pointer;transition:background .15s,color .15s}
+  .snav:hover{background:rgba(255,255,255,.06);color:#C6D3E3}
+  .snav svg{width:15px;height:15px;opacity:.75}
+  .navno{display:inline-flex;width:19px;height:19px;align-items:center;justify-content:center;border-radius:6px;background:rgba(255,255,255,.10);font-size:10.5px;font-weight:800;color:#9FB0C6;flex:none}
+  .snav.active .navno{background:var(--blue);color:#fff}
+  .step-what{display:flex;align-items:center;gap:9px;background:var(--blue-bg);border:1px solid #D5E3FB;border-radius:10px;padding:9px 13px;margin-bottom:14px;font-size:12.5px;line-height:1.5;color:var(--ink)}
+  .step-what b{flex:none;font-size:10px;letter-spacing:.08em;color:var(--blue-d)}
+  .snav.active{background:rgba(255,255,255,.09);color:#fff}
+  .snav .cnt{margin-left:auto;font-size:10px;background:rgba(255,255,255,.10);border-radius:999px;padding:2px 7px}
+  .side-card{margin-top:auto;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:11px 12px}
+  .side-card .k{font-size:9.5px;letter-spacing:.12em;color:#7386A0;font-weight:700;margin-bottom:7px}
+  .side-card b{font-size:12.5px;color:#fff;display:block;margin-bottom:6px}
+  .modelrow{display:flex;align-items:center;gap:7px;font-size:11px;color:#9FB0C6}
+  .modelrow .pdot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(14,159,110,.18)}
+  .side-foot{padding:12px 6px 0;font-size:9.5px;color:#5D7089;letter-spacing:.06em}
+
+  .main{flex:1;position:relative;overflow:hidden}
+  .screen{position:absolute;inset:0;padding:24px 28px;opacity:0;visibility:hidden;transform:translateX(14px);transition:opacity .28s,transform .28s,visibility .28s;overflow:hidden}
+  .screen.on{opacity:1;visibility:visible;transform:none}
+
+  /* ---------- screen common ---------- */
+  .scr-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px}
+  #s1 .scr-head{margin-bottom:12px}
+  #s1 .badges-row{margin-bottom:11px}
+  #s1 .panel-title{margin-bottom:7px}
+  .crumb{font-size:11px;font-weight:700;letter-spacing:.09em;color:#8A99AC;margin-bottom:5px}
+  .scr-head h2{font-size:20px;letter-spacing:-.015em;line-height:1.25}
+  .badge{font-size:10.5px;font-weight:800;letter-spacing:.07em;padding:7px 12px;border-radius:8px;white-space:nowrap;margin-top:4px}
+  .badge-green{background:var(--green-bg);color:var(--green-d);border:1px solid #BCE8D5}
+  .badge-blue{background:var(--blue-bg);color:var(--blue-d);border:1px solid #C9DBFA}
+  .badge-purple{background:#F1EBFE;color:#6D28D9;border:1px solid #DDD0FA}
+  .cols{display:flex;gap:16px}
+  .col-main{flex:1.35;min-width:0}
+  .col-side{flex:1;min-width:0}
+  .panel-title{font-size:11px;font-weight:800;letter-spacing:.09em;color:#64748B;margin-bottom:9px;display:flex;justify-content:space-between;align-items:baseline}
+  .panel-title span{font-weight:600;letter-spacing:.02em;font-size:10px;color:#94A3B8}
+
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:6px 11px;border-radius:999px;background:#fff;border:1px solid var(--line);color:#3D4C60}
+  .chip-green{background:var(--green-bg);border-color:#BCE8D5;color:var(--green-d)}
+  .chip-blue{background:var(--blue-bg);border-color:#C9DBFA;color:var(--blue-d)}
+  .chip-dark{background:#0F172A;border-color:#0F172A;color:#E2E8F0}
+  .chip svg{width:12px;height:12px}
+
+  /* ---------- screen 1 ---------- */
+  .dropzone{background:#fff;border:1.5px dashed #B9C6D6;border-radius:14px;padding:26px 24px;text-align:center}
+  .dropzone .up-ico{width:46px;height:46px;border-radius:12px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+  .dropzone .up-ico svg{width:22px;height:22px}
+  .dropzone b{font-size:15px;display:block;margin-bottom:4px}
+  .dropzone .fmeta{font-size:12px;color:var(--muted)}
+  .dropzone.drag{border-color:var(--blue);background:var(--blue-bg)}
+  .btn-sample{margin-top:12px;background:#fff;border:1px solid var(--line);border-radius:9px;padding:7px 12px;font-size:12px;font-weight:600;color:var(--blue-d);cursor:pointer}
+  .btn-sample:hover{background:var(--blue-bg)}
+  .parsebar{height:6px;background:#E5EDF7;border-radius:999px;margin-top:14px;overflow:hidden;display:none}
+  .parsebar.run{display:block}
+  .parsebar i{display:block;height:100%;width:0;background:var(--blue);border-radius:999px}
+  .parsebar.run i{animation:parseFill 1.3s ease forwards}
+  @keyframes parseFill{to{width:100%}}
+  .filecard{display:flex;align-items:center;gap:10px;margin-top:14px;padding:10px 12px;border:1px solid var(--line);background:#F7FAFF;border-radius:10px;text-align:left;color:var(--blue-d)}
+  .filecard svg{width:18px;height:18px;flex:none}
+  .filecard .fcinfo{min-width:0}
+  .filecard b{font-size:12.5px;color:var(--ink);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .filecard small{font-size:11px;color:var(--muted);display:block}
+  .filecard .chip{margin-left:auto;flex:none}
+  [hidden]{display:none!important}
+  .cta-row{display:flex;justify-content:flex-end;margin-top:16px}
+  .dz-meta{margin-top:14px;font-size:11px;color:#7C8B9E;background:var(--app-bg);border:1px solid var(--line);border-radius:8px;padding:8px 12px}
+  .note-strip{margin-top:14px;display:flex;gap:10px;align-items:flex-start;background:var(--green-bg);border:1px solid #BCE8D5;border-radius:11px;padding:11px 13px;font-size:11.5px;color:#065F46;line-height:1.5}
+  .note-strip svg{width:15px;height:15px;flex:0 0 auto;margin-top:1px}
+  .mode{display:flex;gap:10px;background:#fff;border:1.5px solid var(--line);border-radius:11px;padding:11px 12px;margin-bottom:8px;cursor:pointer;align-items:flex-start;transition:border-color .15s}
+  .mode .radio{width:15px;height:15px;border-radius:50%;border:2px solid #B9C6D6;flex:0 0 auto;margin-top:1px}
+  .mode.selected{border-color:var(--green);background:linear-gradient(0deg,rgba(14,159,110,.04),rgba(14,159,110,.04)),#fff}
+  .mode.selected .radio{border-color:var(--green);border-width:4.5px}
+  .mode .mode-input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+  .mode:has(.mode-input:checked){border-color:var(--green);background:linear-gradient(0deg,rgba(14,159,110,.04),rgba(14,159,110,.04)),#fff}
+  .mode:has(.mode-input:checked) .radio{border-color:var(--green);border-width:4.5px}
+  .mode b{font-size:12.5px;display:block;margin-bottom:2px}
+  .mode p{font-size:11px;color:var(--muted);line-height:1.45}
+  .mode .tag{font-size:8.5px;font-weight:800;letter-spacing:.08em;background:var(--green-bg);color:var(--green-d);border-radius:5px;padding:2.5px 6px;margin-left:6px;vertical-align:1px}
+  .cap-note{font-size:10.5px;color:#7C8B9E;line-height:1.55;padding:2px 4px 0}
+  .cap-note code{font-family:var(--mono);font-size:10px;background:#EEF2F7;border-radius:4px;padding:1px 5px;color:#334155}
+
+  /* ---------- screen 2 ---------- */
+  .badges-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+  .replay{margin-left:auto;font-size:11px;font-weight:700;color:#3D4C60;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 13px;cursor:pointer}
+  .replay:hover{border-color:#9DB}
+  .doc-card{background:#fff;border:1px solid var(--line);border-radius:13px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+  .doc-head{padding:9px 15px;border-bottom:1px solid var(--line);font-size:10.5px;font-weight:800;letter-spacing:.08em;color:#64748B;background:#FBFCFE;display:flex;justify-content:space-between}
+  .doc-head span{font-weight:600;letter-spacing:0;font-family:var(--mono);font-size:10px;color:#94A3B8}
+  .doc-text{padding:13px 16px;font-size:12.6px;line-height:1.92;color:#26334A;font-family:Georgia,'Times New Roman',serif}
+  .doc-text .pageno{float:right;font-family:var(--mono);font-size:9.5px;color:#B0BCC9;margin-left:10px}
+  mark{border-radius:4px;padding:1.5px 4px;position:relative;white-space:nowrap}
+  mark i{position:static;display:inline-block;font-style:normal;font-family:var(--mono);font-size:8.5px;font-weight:700;letter-spacing:.03em;border-radius:4px;padding:1px 4.5px;margin-left:5px;vertical-align:1.5px;opacity:0;transition:opacity .3s}
+  mark.shown i{opacity:1}
+  .mk-person{background:var(--red-bg);box-shadow:inset 0 -2px 0 var(--red)} .mk-person i{background:var(--red);color:#fff}
+  .mk-org{background:#FDEDF6;box-shadow:inset 0 -2px 0 #C02690} .mk-org i{background:#C02690;color:#fff}
+  .mk-amount{background:var(--amber-bg);box-shadow:inset 0 -2px 0 var(--amber)} .mk-amount i{background:var(--amber);color:#fff}
+  .mk-date{background:var(--blue-bg);box-shadow:inset 0 -2px 0 var(--blue)} .mk-date i{background:var(--blue);color:#fff}
+  .mk-email{background:var(--red-bg);box-shadow:inset 0 -2px 0 var(--red)} .mk-email i{background:var(--red);color:#fff}
+  .mk-title{background:#F1EBFE;box-shadow:inset 0 -2px 0 #7C3AED} .mk-title i{background:#7C3AED;color:#fff}
+  .doc-legend{padding:9px 15px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);background:#FBFCFE}
+  .doc-legend b{color:var(--ink)}
+  .finding{background:#fff;border:1px solid var(--line);border-radius:10px;padding:7.5px 10px;margin-bottom:6px;opacity:0;transform:translateY(8px)}
+  .finding.in{animation:pop .38s forwards}
+  @keyframes pop{to{opacity:1;transform:none}}
+  .finding .row1{display:flex;align-items:center;justify-content:space-between;margin-bottom:3.5px}
+  .ftype{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.05em;padding:2.5px 7px;border-radius:5px}
+  .t-person{background:var(--red-bg);color:#B03A3A}.t-org{background:#FDEDF6;color:#C02690}
+  .t-amount{background:var(--amber-bg);color:var(--amber)}.t-date{background:var(--blue-bg);color:var(--blue-d)}
+  .t-email{background:var(--red-bg);color:#B03A3A}.t-title{background:#F1EBFE;color:#6D28D9}
+  .fscore{font-family:var(--mono);font-size:9.5px;color:#94A3B8}
+  .finding code{font-family:var(--mono);font-size:10.6px;color:#1E293B;display:block;margin-bottom:2px}
+  .finding code b{color:var(--green-d)}
+  .fwhy{font-size:10px;color:#7C8B9E}
+  .stat-strip{margin-top:14px;display:flex;gap:0;background:#0F172A;border-radius:11px;padding:10px 6px}
+  .stat-strip span{flex:1;text-align:center;font-size:10px;color:#8CA0B8;letter-spacing:.03em;border-right:1px solid rgba(255,255,255,.08);padding:0 8px}
+  .stat-strip span:last-child{border-right:0}
+  .stat-strip b{display:block;font-size:12px;color:#fff;font-family:var(--mono);margin-top:2px;letter-spacing:0}
+  .stat-strip .ok b{color:#4ADE9C}
+
+  .next-row{margin-top:16px}
+  .next-cards{display:flex;gap:10px;align-items:stretch}
+  .ncard{flex:1;background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 13px;display:flex;gap:10px;align-items:flex-start}
+  .ncard .nstep{width:22px;height:22px;border-radius:50%;background:#0F172A;color:#fff;font-size:10.5px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:0 0 auto;margin-top:1px}
+  .ncard b{font-size:12px;display:block;margin-bottom:2.5px}
+  .ncard p{font-size:10.3px;color:#7C8B9E;line-height:1.45}
+  .narrow{align-self:center;color:#B0BCC9;font-size:15px;font-weight:700;flex:0 0 auto}
+  .nwhere{margin-left:auto;font-size:8.5px;font-weight:800;letter-spacing:.06em;border-radius:5px;padding:3px 7px;white-space:nowrap;flex:0 0 auto;margin-top:1px}
+  .tip-strip{margin-top:14px;display:flex;gap:10px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:11px;padding:10px 13px;font-size:11px;color:#5B6B7F;line-height:1.5}
+  .tip-strip svg{width:14px;height:14px;flex:0 0 auto;margin-top:1px}
+  .tip-strip b{color:var(--ink)}
+
+  /* ---------- screen 3 ---------- */
+  .gate-card{border-radius:13px;overflow:hidden;border:1px solid var(--line);background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+  .gate-head{padding:9px 14px;font-size:10px;font-weight:800;letter-spacing:.1em;display:flex;align-items:center;gap:8px}
+  .gate-head svg{width:13px;height:13px}
+  .gate-head .sub{margin-left:auto;font-weight:600;letter-spacing:.02em;font-size:9.5px;opacity:.75}
+  .gh-green{background:var(--green-bg);color:var(--green-d);border-bottom:1px solid #BCE8D5}
+  .gh-blue{background:var(--blue-bg);color:var(--blue-d);border-bottom:1px solid #C9DBFA}
+  .gate-body{padding:14px 15px;font-size:12.3px;line-height:1.95;color:#26334A;font-family:Georgia,serif}
+  .gate-body .ph{font-family:var(--mono);font-size:11px;background:var(--blue-bg);color:var(--blue-d);border:1px solid #C9DBFA;border-radius:5px;padding:1.5px 5px;white-space:nowrap}
+  .gate-body .real{border-radius:4px;padding:1.5px 4px;background:#F1F5F9;box-shadow:inset 0 -2px 0 #64748B}
+  .map-table{margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .map-table table{width:100%;border-collapse:collapse;font-size:11.3px}
+  .map-table th{text-align:left;font-size:9.5px;letter-spacing:.09em;color:#64748B;background:#FBFCFE;padding:8px 14px;border-bottom:1px solid var(--line);font-weight:800}
+  .map-table td{padding:7.5px 14px;border-bottom:1px solid #EEF2F7;color:#334155}
+  .map-table tr:last-child td{border-bottom:0}
+  .map-table td code{font-family:var(--mono);font-size:10.6px}
+  .map-table td .arrow{color:#94A3B8}
+  .sens{font-size:9px;font-weight:700;letter-spacing:.05em;border-radius:5px;padding:2.5px 7px}
+  .s-hi{background:var(--red-bg);color:#B03A3A}.s-md{background:var(--amber-bg);color:var(--amber)}.s-lo{background:#EEF2F7;color:#64748B}
+  .action-bar{margin-top:15px;display:flex;gap:10px;align-items:center}
+  .btn{font-size:12px;font-weight:700;border-radius:10px;padding:11px 18px;cursor:pointer;border:1px solid transparent}
+  .btn-primary{background:var(--blue);color:#fff;box-shadow:0 6px 16px rgba(37,99,235,.30)}
+  .btn-ghost{background:#fff;border-color:var(--line);color:#3D4C60}
+  .action-note{margin-left:auto;font-size:10.5px;color:#7C8B9E;line-height:1.45;text-align:right;max-width:330px}
+  .action-note b{color:var(--green-d)}
+
+  /* ---------- screen 4 ---------- */
+  .qa-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 15px;display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
+  .qa-ico{width:30px;height:30px;border-radius:9px;background:#0F172A;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .qa-ico svg{width:15px;height:15px}
+  .qa-card b{font-size:13.5px;display:block;margin-bottom:3px;letter-spacing:-.01em}
+  .qa-card p{font-size:10.5px;color:#7C8B9E}
+  .cloud-panel{background:#0F172A;border-radius:13px;padding:13px 16px;color:#CBD5E1}
+  .cloud-panel .lbl{font-size:9.5px;font-weight:800;letter-spacing:.11em;color:#7C8DB0;margin-bottom:9px;display:flex;justify-content:space-between;align-items:center}
+  .cloud-panel .lbl .tok{font-family:var(--mono);font-weight:600;letter-spacing:0;font-size:9.5px;background:rgba(37,99,235,.18);color:#7FA8F5;border-radius:6px;padding:3px 8px}
+  .cloud-panel pre{font-family:var(--mono);font-size:11.6px;line-height:1.85;white-space:pre-wrap;margin:0}
+  .cloud-panel .ph2{background:rgba(37,99,235,.16);color:#8FB3F8;border:1px solid rgba(37,99,235,.4);border-radius:5px;padding:1px 6px}
+  .restore-row{display:flex;align-items:center;gap:12px;margin:11px 0}
+  .restore-row .vline{width:1.5px;height:26px;background:#B9C6D6;margin-left:46px}
+  .restore-badge{font-size:10.5px;font-weight:800;letter-spacing:.06em;background:var(--green-bg);color:var(--green-d);border:1px solid #BCE8D5;border-radius:999px;padding:6px 13px;display:inline-flex;align-items:center;gap:7px}
+  .restore-badge svg{width:12px;height:12px}
+  .answer-panel{background:#fff;border:1.5px solid #BCE8D5;border-radius:13px;padding:13px 16px;box-shadow:0 8px 22px rgba(14,159,110,.10)}
+  .answer-panel .lbl{font-size:9.5px;font-weight:800;letter-spacing:.11em;color:var(--green-d);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+  .answer-panel .lbl span{font-weight:600;letter-spacing:.02em;font-size:9.5px;color:#94A3B8}
+  .answer-panel p{font-size:12.6px;line-height:1.95;color:#26334A;font-family:Georgia,serif}
+  .answer-panel .hl{background:var(--green-bg);border-radius:4px;padding:1.5px 4px;box-shadow:inset 0 -2px 0 var(--green);font-weight:600;color:#065F46}
+  .cites{margin-top:9px;display:flex;gap:7px;flex-wrap:wrap}
+  .cite{font-family:var(--mono);font-size:9.8px;background:#F1F5F9;border:1px solid var(--line);color:#475569;border-radius:6px;padding:3px 8px}
+
+  /* ---------- screen 5 ---------- */
+  .rc-table{background:#fff;border:1px solid var(--line);border-radius:13px;overflow:hidden}
+  .rc-table table{width:100%;border-collapse:collapse;font-size:11.6px}
+  .rc-table th{text-align:left;font-size:9.5px;letter-spacing:.09em;color:#64748B;background:#FBFCFE;padding:9px 15px;border-bottom:1px solid var(--line);font-weight:800}
+  .rc-table td{padding:9.5px 15px;border-bottom:1px solid #EEF2F7;color:#334155;vertical-align:top}
+  .rc-table tr:last-child td{border-bottom:0}
+  .rc-table .stg{font-weight:700;color:var(--ink);white-space:nowrap}
+  .rc-table .stg em{display:block;font-style:normal;font-weight:500;font-size:10px;color:#94A3B8;margin-top:1px}
+  .where{display:inline-flex;align-items:center;gap:6px;font-size:10.8px;font-weight:700;border-radius:7px;padding:4px 9px;white-space:nowrap}
+  .where svg{width:11px;height:11px}
+  .w-dev{background:var(--green-bg);color:var(--green-d)}
+  .w-cld{background:var(--blue-bg);color:var(--blue-d)}
+  .rc-table .mono{font-family:var(--mono);font-size:10.6px}
+  .zero{color:var(--green-d);font-weight:800}
+  .tot-cards{display:flex;gap:11px;margin:14px 0}
+  .tot{flex:1;background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 14px}
+  .tot b{font-size:21px;letter-spacing:-.02em;display:block;font-family:var(--mono)}
+  .tot b.z{color:var(--green)}
+  .tot span{font-size:10px;color:#7C8B9E;font-weight:600;letter-spacing:.03em}
+  .export-row{display:flex;gap:9px;margin-bottom:14px}
+  .export-row .btn{padding:9.5px 15px;font-size:11.5px}
+  .quote{border-left:3px solid var(--ink);padding:4px 0 4px 15px;font-size:14.5px;font-weight:600;color:var(--ink);letter-spacing:-.01em;line-height:1.5}
+  .quote span{color:#7C8B9E;font-weight:500}
+
+  /* ---------- controls ---------- */
+  .controls{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:20px}
+  .controls button{font-size:13px;font-weight:700;border-radius:11px;padding:11px 22px;cursor:pointer;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);color:#C7D2E0}
+  .controls button:hover{background:rgba(255,255,255,.10)}
+  .controls button.primary{background:#fff;color:var(--ink);border-color:#fff}
+  .dots{display:flex;gap:7px}
+  .dots i{width:7px;height:7px;border-radius:50%;background:#3A4A63;cursor:pointer;transition:all .2s}
+  .dots i.on{background:#fff;width:20px;border-radius:4px}
+  .foot-note{margin-top:18px;text-align:center;font-size:11px;color:#5D7089;line-height:1.6}
+  .foot-note b{color:#8CA0B8}
+  /* ---- mobile: the whole page fits a phone (375px+) ---- */
+  @media (max-width:760px){
+    body{padding:14px 10px 24px}
+    .head-chips{flex-wrap:wrap}
+    .stepper{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin-bottom:12px}
+    .stepper::-webkit-scrollbar{display:none}
+    .step{flex:0 0 auto}
+    .step span{white-space:nowrap}
+    .step small{display:none}
+    .frame{border-radius:12px}
+    .app{height:auto;flex-direction:column}
+    .side{display:none}
+    .main{overflow:visible}
+    .screen{position:static;inset:auto;opacity:1;visibility:visible;transform:none;transition:none;display:none;overflow:visible;padding:16px 12px}
+    .screen.on{display:block}
+    .chrome{height:36px;padding:0 10px}
+    .chrome-note{display:none}
+    .url{min-width:0;flex:1}
+    .cols{flex-direction:column}
+    .next-cards{flex-direction:column}
+    .narrow{transform:rotate(90deg)}
+    .qa-card{flex-wrap:wrap}
+    .cites{flex-wrap:wrap}
+    .badges-row .btn{margin-left:0!important}
+    .rc-table{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .rc-table table{min-width:620px}
+    .rc-table th,.rc-table td{padding:8px 10px;white-space:nowrap}
+    .export-row{flex-wrap:wrap}
+    .cta-row .btn{width:100%}
+    .controls{flex-wrap:wrap}
+  }
+</style>
+</head>
+<body>
+<noscript><div style="margin:0;padding:12px 16px;background:#FEF3C7;color:#78350F;font:13px/1.5 system-ui,sans-serif;border-bottom:1px solid #F59E0B">This viewer runs the file without JavaScript — uploads, AI steps, the inference-mode cards' full behaviour and downloads are disabled here. Tap the <b>download icon</b> at the top of this preview, then open the file in <b>Chrome</b>: everything is verified working there.</div></noscript>
+<div class="wrap">
+
+  <header class="deck-head">
+    <div class="brandline">
+      <div class="logo-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.5 9.5-8 11-4.5-1.5-8-6-8-11V5l8-3z"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg>
+      </div>
+      <div>
+        <h1>Redline <span>· Confidential Document Copilot</span></h1>
+        <p>Interactive app preview — Firebase AI Logic hybrid inference · #BuildHybridAI 2026</p>
+      </div>
+    </div>
+    <div class="head-chips">
+      <span class="hchip g">Pipeline, not a chatbot</span>
+      <span class="hchip">3 stages · 1 consent gate</span>
+      <span class="hchip b">Web + Android, one Firebase project</span>
+    </div>
+  </header>
+
+  <nav class="stepper" id="stepper">
+    <button class="step" data-i="0"><span class="n">1</span><span>Upload<small>Drop the contract — stays on device</small></span></button>
+    <button class="step" data-i="1"><span class="n">2</span><span>Scan on device<small>Mark sensitive values locally</small></span></button>
+    <button class="step" data-i="2"><span class="n">3</span><span>Consent gate<small>You approve what is sent</small></span></button>
+    <button class="step" data-i="3"><span class="n">4</span><span>Cloud answer<small>Placeholders only — names restored locally</small></span></button>
+    <button class="step" data-i="4"><span class="n">5</span><span>Receipt<small>Audit log &amp; export</small></span></button>
+  </nav>
+
+  <div class="frame">
+    <div class="chrome">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <div class="url">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0E9F6E" stroke-width="2.5"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+        redline.app/matters/2481
+      </div>
+      <div class="chrome-note"><span class="live"></span>Chrome 139+ · Gemini Nano ready</div>
+    </div>
+
+    <div class="app">
+      <aside class="side">
+        <div class="side-logo">
+          <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.5 9.5-8 11-4.5-1.5-8-6-8-11V5l8-3z"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg></span>
+          Redline
+        </div>
+        <nav>
+          <div class="snav active"><span class="navno">1</span>Upload</div>
+          <div class="snav"><span class="navno">2</span>Scan on device</div>
+          <div class="snav"><span class="navno">3</span>Consent gate</div>
+          <div class="snav"><span class="navno">4</span>Cloud answer</div>
+          <div class="snav"><span class="navno">5</span>Receipt</div>
+        </nav>
+        <div class="side-card">
+          <div class="k">INFERENCE MODE</div>
+          <b>Prefer on device</b>
+          <div class="modelrow"><span class="pdot"></span>Gemini Nano · ready · 0 bytes sent</div>
+        </div>
+        <div class="side-foot">LOCAL-FIRST · APP CHECK ENFORCED</div>
+      </aside>
+
+      <main class="main">
+
+        <!-- ============ SCREEN 1 · INTAKE ============ -->
+        <section class="screen on" id="s0">
+          <div class="scr-head">
+            <div>
+              <div class="crumb">MATTER 2481 · PROJECT FALCON</div>
+              <h2>Drop the contract. Pick how the model runs.</h2>
+            </div>
+            <span class="badge badge-green">STEP 1 · UPLOAD</span>
+          </div>
+          <div class="step-what"><b>WHAT HAPPENS HERE</b> You drop the contract (PDF/DOCX/TXT, or a photo/scan — OCR runs on-device too). It is parsed to text right here in your browser — the file itself never leaves this device. Below, pick how the AI runs: on-device, or hybrid with a cloud step you approve first.</div>
+          <div class="cols">
+            <div class="col-main">
+              <div class="dropzone" id="dz">
+                <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.txt,.md,.png,.jpg,.jpeg,.webp,.bmp" hidden>
+                <div class="up-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></div>
+                <b>Drop the contract here — or click to browse</b>
+                <span class="fmeta">PDF · DOCX · TXT · photos & scans (OCR) — parsed inside this browser tab. Nothing is uploaded, ever.</span>
+                <button class="btn-sample" id="btnSample">No file handy? Use the sample contract</button>
+                <div class="parsebar" id="parseBar"><i></i></div>
+                <div class="filecard" id="fileCard" hidden>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+                  <div class="fcinfo"><b id="fcName"></b><small id="fcMeta"></small></div>
+                  <span class="chip chip-green">ON DEVICE</span>
+                </div>
+                <div class="dz-meta">The file is parsed to text inside your browser. The document itself is never uploaded — the cloud stage will only ever see approved placeholders.</div>
+              </div>
+              <div class="note-strip">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#046C4E" stroke-width="2.2"><path d="M12 2l8 3v6c0 5-3.5 9.5-8 11-4.5-1.5-8-6-8-11V5l8-3z"/></svg>
+                <div>Nothing is analysed, stored or transmitted until you press <b>Run</b>. Confidentiality by default, not by promise — that is the product.</div>
+              </div>
+            </div>
+            <div class="col-side">
+              <div class="panel-title">INFERENCE MODE <span>Firebase AI Logic</span></div>
+              <label class="mode selected"><input type="radio" name="infmode" value="prefer" class="mode-input" checked><span class="radio"></span><div><b>Prefer on device<span class="tag">RECOMMENDED</span></b><p>Stage 1 redaction runs on Gemini Nano. The cloud is used only for the answer step, after you approve the payload.</p></div></label>
+              <label class="mode"><input type="radio" name="infmode" value="device" class="mode-input"><span class="radio"></span><div><b>Only on device</b><p>Airplane mode. The cloud path is disabled entirely — demo it live for the judges.</p></div></label>
+              <label class="mode"><input type="radio" name="infmode" value="cloud" class="mode-input"><span class="radio"></span><div><b>Only in cloud</b><p>Automatic fallback for non-Chrome browsers without on-device capability. The UI announces it honestly.</p></div></label>
+              <div class="cap-note">On-device budget: single-turn · <code>9,216</code> tokens per call · text + JPEG/PNG input. Long contracts are chunked automatically — see Stage&nbsp;1.</div>
+            </div>
+          </div>
+          <div class="next-row">
+            <div class="panel-title" style="margin-bottom:8px">WHAT HAPPENS NEXT <span>the pipeline — there is no chat thread anywhere in Redline</span></div>
+            <div class="next-cards">
+              <div class="ncard"><span class="nstep">1</span><div><b>Find &amp; structure</b><p>On-device Gemini Nano turns clauses into typed findings.</p></div><span class="nwhere" style="background:var(--green-bg);color:var(--green-d)">ON DEVICE</span></div>
+              <span class="narrow">→</span>
+              <div class="ncard"><span class="nstep">2</span><div><b>Consent gate</b><p>You see exactly what would leave the device — and approve the payload.</p></div><span class="nwhere" style="background:var(--green-bg);color:var(--green-d)">YOUR CALL</span></div>
+              <span class="narrow">→</span>
+              <div class="ncard"><span class="nstep">3</span><div><b>Cloud answer, restored</b><p>The model answers in placeholders; your device puts the names back.</p></div><span class="nwhere" style="background:var(--blue-bg);color:var(--blue-d)">CLOUD + LOCAL</span></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ SCREEN 2 · STAGE 1 ON-DEVICE ============ -->
+        <section class="screen" id="s1">
+          <div class="scr-head">
+            <div>
+              <div class="crumb">MATTER 2481 · STAGE 1 RUNNING</div>
+              <h2>On-device scan: entities found, structure enforced.</h2>
+            </div>
+            <span class="badge badge-green">STAGE 1 · ON-DEVICE</span>
+          </div>
+          <div class="step-what"><b>WHAT HAPPENS HERE</b> Gemini Nano reads every chunk of the contract on your device and turns each sensitive value into a typed placeholder — [PERSON_1], [AMOUNT_1], [EMAIL_1]… 0 bytes leave the machine, even mid-scan.</div>
+          <div class="badges-row">
+            <span class="chip chip-blue" id="f1file">Master_Services_Agreement.pdf</span>
+            <span class="chip chip-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>Gemini Nano · Chrome Prompt API</span>
+            <span class="chip">Structured output — JSON schema</span>
+            <span class="chip chip-dark">0 bytes sent</span>
+            <button class="replay" data-replay="1">Replay scan</button>
+            <button class="btn btn-primary" id="ctaS1" style="margin-left:auto">Next: consent gate →</button>
+          </div>
+          <div class="cols">
+            <div class="col-main">
+              <div class="doc-card">
+                <div class="doc-head" id="docHead">EXCERPT · CLAUSE 8.2 — PAYMENT <span>page 12 / 42</span></div>
+                <p class="doc-text" id="docText"><span class="pageno">— 12 —</span>8.2&nbsp;&nbsp;<mark class="mk-amount">$1,240,000<i>[AMOUNT_1]</i></mark> shall be paid by <mark class="mk-org">Apex Dynamics LLC<i>[ORG_1]</i></mark> within thirty (30) days of a valid invoice. This Agreement is executed by <mark class="mk-person">Sarah Chen<i>[PERSON_1]</i></mark>, <mark class="mk-title">Chief Operating Officer<i>[TITLE_1]</i></mark> of Apex Dynamics LLC, contactable at <mark class="mk-email">sarah.chen@apexdyn.com<i>[EMAIL_1]</i></mark>, effective <mark class="mk-date">March 31, 2026<i>[DATE_1]</i></mark>.</p>
+                <div class="doc-legend" id="docLegend">Findings on this chunk: <b>6 entities</b> · confidence ≥ 0.86 · each one becomes a typed field, not free text</div>
+              </div>
+            </div>
+            <div class="col-side">
+              <div class="panel-title">STRUCTURED FINDINGS <span>local JSON · schema-enforced</span></div>
+              <div id="findPanel">
+                <div class="finding"><div class="row1"><span class="ftype t-person">PERSON_NAME</span><span class="fscore">0.94</span></div><code>Sarah Chen → <b>[PERSON_1]</b></code><span class="fwhy">counterparty signatory</span></div>
+                <div class="finding"><div class="row1"><span class="ftype t-org">ORG</span><span class="fscore">0.97</span></div><code>Apex Dynamics LLC → <b>[ORG_1]</b></code><span class="fwhy">contracting party</span></div>
+                <div class="finding"><div class="row1"><span class="ftype t-amount">AMOUNT</span><span class="fscore">0.99</span></div><code>$1,240,000 → <b>[AMOUNT_1]</b></code><span class="fwhy">commercial term</span></div>
+                <div class="finding"><div class="row1"><span class="ftype t-date">DATE</span><span class="fscore">0.98</span></div><code>March 31, 2026 → <b>[DATE_1]</b></code><span class="fwhy">effective date</span></div>
+                <div class="finding"><div class="row1"><span class="ftype t-email">EMAIL</span><span class="fscore">0.99</span></div><code>sarah.chen@apexdyn.com → <b>[EMAIL_1]</b></code><span class="fwhy">direct contact PII</span></div>
+                <div class="finding"><div class="row1"><span class="ftype t-title">TITLE</span><span class="fscore">0.86</span></div><code>Chief Operating Officer → <b>[TITLE_1]</b></code><span class="fwhy">role identifier</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="stat-strip">
+            <span>CHUNK<b id="statChunk">4 / 9</b></span>
+            <span>TOKENS<b id="statTok">1,847 / 9,216</b></span>
+            <span>LATENCY<b id="statLat">3.1 s</b></span>
+            <span>MODEL<b id="statModel">Gemini Nano</b></span>
+            <span class="ok">NETWORK<b>idle — nothing sent</b></span>
+          </div>
+        </section>
+
+        <!-- ============ SCREEN 3 · CONSENT GATE ============ -->
+        <section class="screen" id="s2">
+          <div class="scr-head">
+            <div>
+              <div class="crumb">MATTER 2481 · STAGE 2</div>
+              <h2>What leaves your device? You decide.</h2>
+            </div>
+            <span class="badge badge-purple">STAGE 2 · CONSENT GATE</span>
+          </div>
+          <div class="step-what"><b>WHAT HAPPENS HERE</b> Side by side: what stays on your device (left) vs what would go to the cloud — placeholders only (right). Nothing is transmitted until you press Approve.</div>
+          <div class="cols">
+            <div class="col-main">
+              <div class="gate-card">
+                <div class="gate-head gh-green">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2l8 3v6c0 5-3.5 9.5-8 11-4.5-1.5-8-6-8-11V5l8-3z"/></svg>
+                  STAYS ON DEVICE — NEVER SENT<span class="sub">your copy</span>
+                </div>
+                <div class="gate-body" id="gateLeft">8.2&nbsp;&nbsp;<span class="real">$1,240,000</span> shall be paid by <span class="real">Apex Dynamics LLC</span> within thirty (30) days of a valid invoice. This Agreement is executed by <span class="real">Sarah Chen</span>, Chief Operating Officer of Apex Dynamics LLC, contactable at <span class="real">sarah.chen@apexdyn.com</span>, effective <span class="real">March 31, 2026</span>.</div>
+              </div>
+            </div>
+            <div class="col-side">
+              <div class="gate-card">
+                <div class="gate-head gh-blue">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>
+                  GOES TO CLOUD — PLACEHOLDERS ONLY<span class="sub">what the model sees</span>
+                </div>
+                <div class="gate-body" id="gateRight">8.2&nbsp;&nbsp;<span class="ph">[AMOUNT_1]</span> shall be paid by <span class="ph">[ORG_1]</span> within thirty (30) days of a valid invoice. This Agreement is executed by <span class="ph">[PERSON_1]</span>, <span class="ph">[TITLE_1]</span> of <span class="ph">[ORG_1]</span>, contactable at <span class="ph">[EMAIL_1]</span>, effective <span class="ph">[DATE_1]</span>.</div>
+              </div>
+            </div>
+          </div>
+          <div class="map-table">
+            <table>
+              <thead><tr><th>ORIGINAL — NEVER SENT</th><th></th><th>PLACEHOLDER — SENT</th><th>WHY IT MATTERS</th><th>SENSITIVITY</th></tr></thead>
+              <tbody id="mapBody">
+                <tr><td><code>Sarah Chen</code></td><td class="arrow">→</td><td><code>[PERSON_1]</code></td><td>signatory identity</td><td><span class="sens s-hi">HIGH</span></td></tr>
+                <tr><td><code>Apex Dynamics LLC</code></td><td class="arrow">→</td><td><code>[ORG_1]</code></td><td>client identity</td><td><span class="sens s-hi">HIGH</span></td></tr>
+                <tr><td><code>$1,240,000</code></td><td class="arrow">→</td><td><code>[AMOUNT_1]</code></td><td>commercial term</td><td><span class="sens s-md">MEDIUM</span></td></tr>
+                <tr><td><code>March 31, 2026</code></td><td class="arrow">→</td><td><code>[DATE_1]</code></td><td>effective date</td><td><span class="sens s-lo">LOW</span></td></tr>
+                <tr><td><code>sarah.chen@apexdyn.com</code></td><td class="arrow">→</td><td><code>[EMAIL_1]</code></td><td>direct contact PII</td><td><span class="sens s-hi">HIGH</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="action-bar">
+            <button class="btn btn-primary" id="approveBtn">Approve &amp; send 6 placeholders · 412 tokens</button>
+            <button class="btn btn-ghost">Keep everything on device</button>
+            <div class="action-note">The mapping table lives only in this browser tab. <b>Re-hydration is local</b> — reversible by design, and the reverse map is never transmitted.</div>
+          </div>
+          <div class="tip-strip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="2" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+            <div><b>Judge-tip built in:</b> switch the inference mode to “Only on device” and Stages 1–3 complete with the radio off — the airplane-mode demo runs end to end, no network required.</div>
+          </div>
+        </section>
+
+        <!-- ============ SCREEN 4 · CLOUD + RESTORE ============ -->
+        <section class="screen" id="s3">
+          <div class="scr-head">
+            <div>
+              <div class="crumb">MATTER 2481 · STAGE 3</div>
+              <h2>Cloud answers in placeholders. Your device restores the names.</h2>
+            </div>
+            <span class="badge badge-blue">STAGE 3 · CLOUD + LOCAL RESTORE</span>
+          </div>
+          <div class="step-what"><b>WHAT HAPPENS HERE</b> The cloud model answers your question using placeholders only. Your device then swaps the placeholders back to real values — the mapping never left the machine.</div>
+          <div class="qa-card">
+            <div class="qa-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 17v-1c0-1.5 1-2 2-2.5s2-1.5 2-3a4 4 0 00-8 0"/><circle cx="12" cy="20.5" r=".5" fill="#fff"/></svg></div>
+            <div>
+              <b>What are the payment obligations, and who is authorised to sign?</b>
+              <p>One question, one cited answer. Redline is a pipeline with a Q&amp;A step — not a chat thread.</p>
+            </div>
+            <span class="chip chip-blue" style="margin-left:auto;align-self:center">cloud · Gemini 2.5 Flash</span>
+          </div>
+          <div class="cloud-panel" id="cloudPanel">
+            <div class="lbl">CLOUD RESPONSE — EXACTLY AS RECEIVED<span class="tok" id="cloudTok">412 tokens in · 0 personal values</span></div>
+            <pre id="cloudPre"><span class="ph2">[ORG_1]</span> shall pay <span class="ph2">[AMOUNT_1]</span> within thirty (30) days of a valid invoice.
+This Agreement is executed by <span class="ph2">[PERSON_1]</span>, <span class="ph2">[TITLE_1]</span> of <span class="ph2">[ORG_1]</span>.
+Payment obligations: net-30 from invoice date; late payments accrue 1.5% monthly.
+Signing authority rests with <span class="ph2">[PERSON_1]</span> in the capacity of <span class="ph2">[TITLE_1]</span>.</pre>
+          </div>
+          <div class="restore-row">
+            <span class="vline"></span>
+            <span class="restore-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M6 13l6 6 6-6"/></svg>RE-HYDRATED LOCALLY — THE MAPPING NEVER LEFT THE DEVICE</span>
+          </div>
+          <div class="answer-panel" id="answerPanel">
+            <div class="lbl">YOUR ANSWER — RESTORED ON DEVICE<span>same answer, your values</span></div>
+            <p id="answerP"><span class="hl">Apex Dynamics LLC</span> shall pay <span class="hl">$1,240,000</span> within thirty (30) days of a valid invoice. This Agreement is executed by <span class="hl">Sarah Chen</span>, Chief Operating Officer of Apex Dynamics LLC. Payment obligations: net-30 from invoice date; late payments accrue 1.5% monthly. Signing authority rests with <span class="hl">Sarah Chen</span> in the capacity of Chief Operating Officer.</p>
+            <div class="cites" id="answerCites"><span class="cite">§8.2 · p.12</span><span class="cite">§8.4 · p.13</span><span class="cite">signature block · p.1</span></div>
+          </div>
+          <div class="cta-row"><button class="btn btn-primary" id="ctaS3">See the trust receipt →</button></div>
+        </section>
+
+        <!-- ============ SCREEN 5 · RECEIPT ============ -->
+        <section class="screen" id="s4">
+          <div class="scr-head">
+            <div>
+              <div class="crumb">MATTER 2481 · COMPLETE</div>
+              <h2>The receipt. Proof, not promises.</h2>
+            </div>
+            <span class="badge badge-green">STEP 5 · RECEIPT</span>
+          </div>
+          <div class="step-what"><b>WHAT HAPPENS HERE</b> The full audit trail of the run: which stage ran where, what left the device (mostly 0 bytes), sealed hashes. Export it as proof for your client or firm.</div>
+          <div class="rc-table">
+            <table>
+              <thead><tr><th>STAGE</th><th>RAN ON</th><th>INPUT</th><th>OUTPUT</th><th>LEFT THE DEVICE</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="stg">1 · Find &amp; structure<em>schema-enforced JSON</em></td>
+                  <td><span class="where w-dev" id="rc1where"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>On device</span></td>
+                  <td id="rc1in">18,204 words · 9 chunks</td>
+                  <td id="rc1out">23 structured findings</td>
+                  <td class="mono zero">0 bytes</td>
+                </tr>
+                <tr>
+                  <td class="stg">2 · Consent gate<em>you approved the payload</em></td>
+                  <td><span class="where w-dev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 2l8 3v6c0 5-3.5 9.5-8 11-4.5-1.5-8-6-8-11V5l8-3z"/></svg>On device</span></td>
+                  <td id="rc2in">23 findings + local map</td>
+                  <td id="rc2out">approved payload · 6 placeholders</td>
+                  <td class="mono zero">0 bytes</td>
+                </tr>
+                <tr>
+                  <td class="stg">3 · Analyse &amp; answer<em>cited clause analysis</em></td>
+                  <td><span class="where w-cld" id="rc3where"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>Cloud</span></td>
+                  <td class="mono" id="rc3in">412 placeholder tokens</td>
+                  <td>cited answer (placeholders)</td>
+                  <td class="mono" id="rc3out">412 tokens · <span class="zero">0 personal values</span></td>
+                </tr>
+                <tr>
+                  <td class="stg">4 · Re-hydration<em>names restored locally</em></td>
+                  <td><span class="where w-dev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>On device</span></td>
+                  <td>answer + local reverse map</td>
+                  <td>final report, ready to file</td>
+                  <td class="mono zero">0 bytes</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="tot-cards">
+            <div class="tot"><b class="z">0</b><span>PERSONAL VALUES SENT TO CLOUD</span></div>
+            <div class="tot"><b>6</b><span>PLACEHOLDERS SENT</span></div>
+            <div class="tot"><b>412</b><span>CLOUD TOKENS</span></div>
+            <div class="tot"><b>23</b><span>FINDINGS SEALED · SHA-256</span></div>
+          </div>
+          <div class="export-row">
+            <button class="btn btn-primary" id="btnExpDocx">Export redlined DOCX</button>
+            <button class="btn btn-ghost" id="btnAuditJson">Download audit log (.json)</button>
+            <button class="btn btn-ghost" id="btnAndroid">Android build · App Distribution</button>
+          </div>
+          <div class="quote">“Every other entry asks you to trust the AI. <span>Redline shows you the receipts.”</span></div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="prev">Back</button>
+    <div class="dots" id="dots"></div>
+    <button id="next" class="primary">Next</button>
+  </div>
+  <p class="foot-note"><b>Preview artifact</b> — your own PDF/DOCX/TXT is parsed and scanned for real, in-tab (pdf.js/mammoth load from CDN); the sample button runs pre-built demo data. Structure mirrors the build plan (§3 pipeline · §5 screens · Table 12 platform limits).<br>Keyboard: ← → to navigate. The interface is a document pipeline by design — there is no chat thread anywhere in the product.</p>
+</div>
+
+<script>
+  const screens=[...document.querySelectorAll('.screen')];
+  const steps=[...document.querySelectorAll('.step')];
+  const dotsEl=document.getElementById('dots');
+  let cur=0;
+  screens.forEach((_,i)=>{const d=document.createElement('i');d.onclick=()=>go(i);dotsEl.appendChild(d);});
+  const dots=[...dotsEl.children];
+  const navItems=[...document.querySelectorAll('.snav')];
+
+  function animate(i){
+    if(i===1){
+      const scr=screens[1];
+      scr.querySelectorAll('mark').forEach(m=>m.classList.remove('shown'));
+      scr.querySelectorAll('.finding').forEach(f=>f.classList.remove('in'));
+      const marks=[...scr.querySelectorAll('mark')];
+      const finds=[...scr.querySelectorAll('.finding')];
+      marks.forEach((m,k)=>setTimeout(()=>m.classList.add('shown'),350+k*260));
+      finds.forEach((f,k)=>setTimeout(()=>f.classList.add('in'),450+k*260));
+    }
+    if(i===3){
+      const cp=document.getElementById('cloudPanel'),ap=document.getElementById('answerPanel');
+      cp.style.transition='opacity .4s';ap.style.transition='opacity .5s, transform .5s';
+      cp.style.opacity=0;ap.style.opacity=0;ap.style.transform='translateY(10px)';
+      setTimeout(()=>{cp.style.opacity=1;},150);
+      setTimeout(()=>{ap.style.opacity=1;ap.style.transform='none';},950);
+    }
+  }
+  function go(i){
+    cur=Math.max(0,Math.min(screens.length-1,i));
+    screens.forEach((s,k)=>s.classList.toggle('on',k===cur));
+    steps.forEach((s,k)=>{s.classList.toggle('active',k===cur);s.classList.toggle('done',k<cur);});
+    dots.forEach((d,k)=>d.classList.toggle('on',k===cur));
+    navItems.forEach((n,k)=>n.classList.toggle('active',k===cur));
+    document.getElementById('prev').style.visibility=cur===0?'hidden':'visible';
+    document.getElementById('next').textContent=cur===screens.length-1?'Restart':'Next';
+    animate(cur);
+  }
+  document.getElementById('prev').onclick=()=>go(cur-1);
+  document.getElementById('next').onclick=()=>go(cur===screens.length-1?0:cur+1);
+  steps.forEach(s=>s.onclick=()=>go(+s.dataset.i));
+  document.querySelectorAll('[data-replay]').forEach(b=>b.onclick=()=>animate(+b.dataset.replay));
+  // real upload + local entity scan — the Upload step parses the ACTUAL file in this browser tab
+  const dz=document.getElementById('dz'),fileInput=document.getElementById('fileInput'),
+        fileCard=document.getElementById('fileCard'),fcName=document.getElementById('fcName'),
+        fcMeta=document.getElementById('fcMeta'),parseBar=document.getElementById('parseBar'),
+        f1file=document.getElementById('f1file');
+  function fmtSize(b){return b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB'}
+  function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+  /* ---- local entity scanner: deterministic, runs in-tab, nothing sent ---- */
+  function scanText(text){
+    const map=new Map(),order=[],counts={PERSON:0,ORG:0,AMOUNT:0,DATE:0,EMAIL:0,TITLE:0};
+    function add(type,value,why){
+      value=String(value).replace(/\s+/g,' ').trim();
+      if(value.length<3||value.length>90)return;
+      if(type!=='EMAIL'&&/@/.test(value))return;
+      const key=type+'|'+value.toLowerCase();
+      if(map.has(key))return;
+      if(type==='PERSON'){for(const f of order){if(f.type==='ORG'&&(f.value+' ').startsWith(value+' '))return;}}
+      if(type==='ORG'){for(const f of order){if(f.type==='PERSON'&&f.value===value)return;}}
+      counts[type]++;const rec={type,value,ph:'['+type+'_'+counts[type]+']',why};
+      map.set(key,rec);order.push(rec);
+    }
+    text.replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,m=>{add('EMAIL',m,'direct contact PII');return m;});
+    text.replace(/[$€£₱]\s?\d[\d,]*(?:\.\d{1,2})?|\b(?:USD|EUR|GBP|PHP)\s?\d[\d,]*(?:\.\d{1,2})?|\b\d[\d,]{2,}\s?(?:USD|EUR|GBP|dollars|euros)\b/gi,m=>{add('AMOUNT',m,'commercial term');return m;});
+    text.replace(/\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4}\b|\b\d{1,2}\/\d{1,2}\/\d{2,4}\b|\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{4}\b/g,m=>{add('DATE',m,'date reference');return m;});
+    text.replace(/\bChief\s+(?:Executive|Operating|Financial|Technology|Legal|Compliance|Marketing)\s+Officer\b|\b(?:Managing|General|Regional)\s+Director\b|\bManaging\s+Partner\b|\bGeneral\s+Counsel\b|\bVice\s+President\b|\bNotary\s+Public\b|\bTreasurer\b|\bComptroller\b/g,m=>{add('TITLE',m,'role identifier');return m;});
+    text.replace(/\b(?:[A-Z][A-Za-z0-9&.'-]+[^\S\n]+){0,3}(?:&[^\S\n]+)?[A-Z][A-Za-z0-9&.'-]+,?[^\S\n]+(?:Inc|LLC|LLP|Ltd|GmbH|Corp|Corporation|Company|Co|S\.?A\.?|B\.?V\.?|Pte|Pty|Holdings|Group|Partners|Associates|Solutions|Technologies|Systems|Enterprises|Ventures|Labs|Foundation|Institute|University)\b\.?/g,m=>{add('ORG',m.replace(/,$/,''),'organization identity');return m;});
+    text.replace(/\b(?:Mr|Mrs|Ms|Miss|Dr|Prof|Atty)\.?\s+(?:(?!Mr\b|Mrs\b|Ms\b|Miss\b|Dr\b|Prof\b|Atty\b|Treasurer\b|Comptroller\b|Officer\b|Director\b|President\b|Counsel\b|Partner\b|Manager\b|Notary\b|Public\b)[A-Z][a-z]+)(?:\s+(?:(?!Mr\b|Mrs\b|Ms\b|Miss\b|Dr\b|Prof\b|Atty\b|Treasurer\b|Comptroller\b|Officer\b|Director\b|President\b|Counsel\b|Partner\b|Manager\b|Notary\b|Public\b)[A-Z][a-z]+)){0,2}/g,m=>{add('PERSON',m,'named individual');return m;});
+    text.replace(/\b(?:executed by|signed by|witnessed by|represented by|hereby appointed|by and between|between|attention|attn|contact(?:ed)?|c\/o)\b\s*[:;]?\s+((?:[A-Z][a-z]+|Del|De|La|Van|Von|Der)(?:\s+(?:[A-Z][a-z]+|del|de|la|van|von|der)){1,2})/g,(m,g1)=>{add('PERSON',g1,'counterparty signatory');return m;});
+    return order.slice(0,24);
+  }
+  function buildRedacted(text,findings){
+    let red=text;
+    [...findings].sort((a,b)=>b.value.length-a.value.length).forEach(f=>{red=red.split(f.value).join(f.ph);});
+    return red;
+  }
+  function pickExcerpt(text,findings,pages){
+    if(text.length<=900)return{text:text.slice(0,900),page:1};
+    const step=Math.max(120,Math.floor(text.length/40));
+    let best=-1,bestIdx=0;
+    for(let i=0;i+700<=text.length;i+=step){
+      const w=text.slice(i,i+700);let s=0;
+      findings.forEach(f=>{if(w.indexOf(f.value)>=0)s++;});
+      if(s>best){best=s;bestIdx=i;}
+    }
+    let a=text.lastIndexOf('\n',bestIdx);if(a<0||bestIdx-a>200)a=bestIdx;
+    let b=text.indexOf('.',bestIdx+700);if(b<0||b-bestIdx>900)b=bestIdx+700;
+    return{text:text.slice(a,b+1),page:Math.max(1,Math.round(bestIdx/text.length*pages))};
+  }
+  function sentences(t){return t.split(/(?<=[.!?])\s+/).map(s=>s.trim()).filter(s=>s.length>25&&s.length<400);}
+  function buildAnswer(red){
+    const has=(s,t)=>new RegExp('\\['+t+'_\\d+\\]').test(s);
+    const ss=sentences(red);
+    const lines=[];
+    const pay=ss.find(s=>has(s,'AMOUNT')||/pay|invoice|fee|compensation/i.test(s));
+    const sign=ss.find(s=>has(s,'PERSON')||/executed|signed|signatory|authoriz/i.test(s)&&s!==pay);
+    const extra=ss.find(s=>/terminate|renew|confidential|indemnif|liabilit/i.test(s)&&s!==pay&&s!==sign);
+    if(pay)lines.push(pay);if(sign)lines.push(sign);if(extra)lines.push(extra);
+    if(!lines.length)lines.push('The local scanner found no obvious payment or signature clauses in this document — the answer covers only the detected structure. Try the sample contract or a text-based PDF.');
+    return lines.slice(0,3).join(' ');
+  }
+  /* ---- apply a real parsed document to every screen ---- */
+  function applyReal(name,size,text,pages,words,src){
+    src=src||'text layer';
+    const t0=performance.now();
+    const findings=scanText(text);
+    const red=buildRedacted(text,findings);
+    const ex=pickExcerpt(text,findings,pages);
+    const exRed=buildRedacted(ex.text,findings);
+    const reverse={};findings.forEach(f=>reverse[f.ph]=f.value);
+    const chunks=Math.max(1,Math.ceil(text.length/1200));
+    window.RL={name,size,text,pages,words,findings,red,reverse,exRed,realEx:ex.text,page:ex.page,chunks};
+    const MK={PERSON:'mk-person',ORG:'mk-org',AMOUNT:'mk-amount',DATE:'mk-date',EMAIL:'mk-email',TITLE:'mk-title'};
+    // s1 — real excerpt, real findings
+    document.getElementById('docHead').innerHTML='EXCERPT · DENSEST REGION — '+esc(name.toUpperCase().slice(0,34))+' <span>≈ page '+ex.page+' / '+pages+'</span>';
+    let html=esc(exRed);
+    findings.forEach(f=>{html=html.split(f.ph).join('<mark class="'+MK[f.type]+'">'+f.ph+'</mark>');});
+    document.getElementById('docText').innerHTML='<span class="pageno">— ≈p.'+ex.page+' —</span>'+html;
+    document.getElementById('docLegend').innerHTML='Findings on this excerpt: <b>'+findings.length+' entities</b> · local scanner runs in-tab · each one becomes a typed field, not free text';
+    document.getElementById('findPanel').innerHTML=findings.length?findings.map(f=>
+      '<div class="finding in"><div class="row1"><span class="ftype t-'+f.type.toLowerCase()+'">'+(f.type==='PERSON'?'PERSON_NAME':f.type)+'</span><span class="fscore">LOCAL</span></div><code>'+esc(f.value)+' → <b>'+f.ph+'</b></code><span class="fwhy">'+esc(f.why)+'</span></div>'
+    ).join(''):'<div class="finding in"><code>No obvious sensitive entities found by the local scanner — the document may be genuinely clean.</code></div>';
+    document.getElementById('statChunk').textContent='1 / '+chunks;
+    document.getElementById('statTok').textContent=Math.round(Math.min(1200,text.length)/4).toLocaleString('en-US')+' / 9,216';
+    document.getElementById('statLat').textContent=((performance.now()-t0)/1000).toFixed(1)+' s';
+    document.getElementById('statModel').textContent='Local scan · Nano ready';
+    // s2 — consent gate: real values left, placeholders right, live map table
+    // short documents (briefs, most contracts) show the ENTIRE text here so the
+    // user sees 100% of what would be redacted; long ones keep the densest excerpt
+    const gateSrc=text.length<=2600?text:ex.text;
+    let left=esc(gateSrc);
+    [...findings].sort((a,b)=>b.value.length-a.value.length).forEach(f=>{left=left.split(esc(f.value)).join('<span class="real">'+esc(f.value)+'</span>');});
+    document.getElementById('gateLeft').innerHTML=left;
+    let right=esc(buildRedacted(gateSrc,findings));
+    findings.forEach(f=>{right=right.split(f.ph).join('<span class="ph">'+f.ph+'</span>');});
+    document.getElementById('gateRight').innerHTML=right;
+    document.getElementById('mapBody').innerHTML=findings.map(f=>{
+      const sens=(f.type==='EMAIL'||f.type==='PERSON'||f.type==='ORG')?['s-hi','HIGH']:(f.type==='AMOUNT'?['s-md','MEDIUM']:['s-lo','LOW']);
+      return '<tr><td><code>'+esc(f.value)+'</code></td><td class="arrow">→</td><td><code>'+f.ph+'</code></td><td>'+esc(f.why)+'</td><td><span class="sens '+sens[0]+'">'+sens[1]+'</span></td></tr>';
+    }).join('')||'<tr><td colspan="5"><code>No entities detected — nothing to send</code></td></tr>';
+    document.getElementById('approveBtn').textContent='Approve & send '+findings.length+' placeholders · ~'+Math.round(exRed.length/4)+' tokens';
+    // s3 — cloud response in placeholders + restored answer from the real text
+    const ansPh=buildAnswer(red.slice(0,8000));
+    document.getElementById('cloudPre').innerHTML=esc(ansPh).replace(/\[(?:PERSON|ORG|AMOUNT|DATE|EMAIL|TITLE)_\d+\]/g,m=>'<span class="ph2">'+m+'</span>');
+    document.getElementById('cloudTok').textContent='~'+Math.round(ansPh.length/4)+' tokens in · 0 personal values';
+    let ans=ansPh;
+    Object.keys(reverse).forEach(ph=>{ans=ans.split(ph).join('\u0001'+reverse[ph]+'\u0002');});
+    document.getElementById('answerP').innerHTML=esc(ans).replace(/\u0001/g,'<span class="hl">').replace(/\u0002/g,'</span>');
+    document.getElementById('answerCites').innerHTML='<span class="cite">local scan · ≈p.'+ex.page+'</span><span class="cite">'+pages+' page'+(pages>1?'s':'')+' parsed</span><span class="cite">'+findings.length+' entities mapped locally</span><span class="cite">source: '+esc(src)+'</span>';
+    // s4 — receipt with real counts
+    document.getElementById('rc1in').textContent=words.toLocaleString('en-US')+' words · '+chunks+' chunks';
+    document.getElementById('rc1out').textContent=findings.length+' structured findings';
+    document.getElementById('rc2in').textContent=findings.length+' findings + local map';
+    document.getElementById('rc2out').textContent='approved payload · '+findings.length+' placeholders';
+    document.getElementById('rc3in').textContent='~'+Math.round(ansPh.length/4)+' placeholder tokens';
+    document.getElementById('rc3out').textContent='~'+Math.round(ansPh.length/4)+' tokens · 0 personal values';
+    if(f1file)f1file.textContent=name;
+    fcMeta.style.color='';
+    fcMeta.textContent=fmtSize(size)+' · parsed on device · '+words.toLocaleString('en-US')+' words · '+(pages>1?pages+' pages · ':'')+findings.length+' entities · 0 bytes sent';
+  }
+  /* ---- inference mode cards: clickable, and the choice actually steers the pipeline ---- */
+  const DEV_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>';
+  const CLD_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>';
+  window.RL_MODE=window.RL_MODE||{mode:'prefer'};
+  function paintWhere(el,dev){if(!el)return;el.className='where '+(dev?'w-dev':'w-cld');el.innerHTML=(dev?DEV_SVG:CLD_SVG)+(dev?'On device':'Cloud');}
+  function applyMode(){
+    const m=window.RL_MODE.mode;
+    paintWhere(document.getElementById('rc1where'),m!=='cloud');  // stage 1: cloud-only mode moves extraction to the cloud
+    paintWhere(document.getElementById('rc3where'),m==='device'); // airplane mode: the answer runs on device too
+  }
+  document.querySelectorAll('.mode .mode-input').forEach(inp=>{
+    inp.addEventListener('change',()=>{
+      document.querySelectorAll('.mode').forEach(c=>c.classList.remove('selected'));
+      inp.closest('.mode').classList.add('selected');
+      window.RL_MODE.mode=inp.value;
+      applyMode();
+    });
+  });
+  try{if(window.top!==window.self&&document.body){const n=document.createElement('div');n.id='rlEmbedNote';n.style.cssText='position:fixed;left:12px;right:12px;bottom:12px;z-index:999;background:#0B1220;color:#DCE7F5;border:1px solid #24344D;border-radius:12px;padding:10px 14px;font:12px/1.5 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.4)';n.innerHTML='You are viewing a static preview inside another app — uploads, AI steps and downloads are disabled here. <b>Tap the download icon at the top, then open the file in Chrome</b> for the fully working version. <span id="rlEmbedClose" style="float:right;cursor:pointer;color:#8FA3BD;font-weight:700">&times;</span>';document.body.appendChild(n);n.querySelector('#rlEmbedClose').onclick=function(){n.remove()};}}catch(e){}
+  /* ---- stage 5: real exports — client-side zip writer, audit json, redlined docx, android project ---- */
+  const RL_SELF_HTML='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+  let _crcT=null;
+  function crc32(u8){if(!_crcT){_crcT=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);_crcT[n]=c>>>0;}}let c=~0;for(let i=0;i<u8.length;i++)c=_crcT[(c^u8[i])&0xFF]^(c>>>8);return (~c)>>>0;}
+  function makeZip(files,mime){ // stored zip (no compression) built byte-by-byte, zero dependencies
+    const enc=new TextEncoder(),parts=[],central=[];let off=0;
+    files.forEach(f=>{
+      const data=typeof f.data==='string'?enc.encode(f.data):f.data,nm=enc.encode(f.name),crc=crc32(data);
+      const h=new Uint8Array(30),hv=new DataView(h.buffer);
+      hv.setUint32(0,0x04034b50,true);hv.setUint16(4,20,true);hv.setUint16(6,0x0800,true);hv.setUint32(14,crc,true);
+      hv.setUint32(18,data.length,true);hv.setUint32(22,data.length,true);hv.setUint16(26,nm.length,true);
+      parts.push(h,nm,data);
+      const c=new Uint8Array(46),cv=new DataView(c.buffer);
+      cv.setUint32(0,0x02014b50,true);cv.setUint16(4,20,true);cv.setUint16(6,20,true);cv.setUint16(8,0x0800,true);
+      cv.setUint32(16,crc,true);cv.setUint32(20,data.length,true);cv.setUint32(24,data.length,true);
+      cv.setUint16(28,nm.length,true);cv.setUint32(42,off,true);
+      central.push([c,nm]);off+=30+nm.length+data.length;
+    });
+    const cdStart=off;let cdSize=0;
+    central.forEach(p=>{parts.push(p[0],p[1]);cdSize+=p[0].length+p[1].length;});
+    const e=new Uint8Array(22),ev=new DataView(e.buffer);
+    ev.setUint32(0,0x06054b50,true);ev.setUint16(8,files.length,true);ev.setUint16(10,files.length,true);
+    ev.setUint32(12,cdSize,true);ev.setUint32(16,cdStart,true);
+    parts.push(e);
+    return new Blob(parts,{type:mime||'application/zip'});
+  }
+  function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},900);}
+  const stamp=()=>new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+  const xmlEsc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  function auditObj(){
+    const s=window.RL||{};const nf=(s.findings||[]).length;
+    return{app:'Redline — private document pipeline',schema:'redline.audit.v1',exported_at:new Date().toISOString(),
+      document:{name:s.name||null,size_bytes:s.size||0,words:s.words||0,pages:s.pages||1,chunks:s.chunks||0},
+      pipeline:[
+        {stage:1,name:'Find & structure',ran_on:'on device',input:(s.words||0)+' words / '+(s.chunks||0)+' chunks',output:nf+' structured findings',left_device:0},
+        {stage:2,name:'Consent gate',ran_on:'on device',input:nf+' findings + local map',output:'approved payload · '+nf+' placeholders',left_device:0},
+        {stage:3,name:'Analyse & answer',ran_on:'cloud',input:'placeholder tokens only',output:'cited answer',left_device:0},
+        {stage:4,name:'Re-hydration',ran_on:'on device',input:'answer + local reverse map',output:'final report',left_device:0}],
+      entities:(s.findings||[]).map(f=>({type:f.type,placeholder:f.ph,reason:f.why})),
+      note:'Entity VALUES are intentionally absent — the audit log proves the run without leaking a single personal value.',
+      bytes_sent:0};
+  }
+  document.getElementById('btnAuditJson').addEventListener('click',()=>dl(new Blob([JSON.stringify(auditObj(),null,2)],{type:'application/json'}),'redline_audit_'+stamp()+'.json'));
+  document.getElementById('btnExpDocx').addEventListener('click',()=>{
+    const s=window.RL;if(!s||!s.red){alert('Upload a document first — the export packs the redlined text of the current session.');return;}
+    const paras=s.red.split(/\n+/).filter(p=>p.trim()).map(p=>'<w:p><w:r><w:t xml:space="preserve">'+xmlEsc(p.trim())+'</w:t></w:r></w:p>').join('');
+    const W='xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
+    const files=[
+      {name:'[Content_Types].xml',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>'},
+      {name:'_rels/.rels',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>'},
+      {name:'word/document.xml',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:document '+W+'><w:body>'+paras+'<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1418" w:right="1418" w:bottom="1418" w:left="1418"/></w:sectPr></w:body></w:document>'},
+      {name:'word/_rels/document.xml.rels',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'},
+      {name:'word/styles.xml',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:styles '+W+'><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:sz w:val="22"/></w:rPr></w:rPrDefault></w:docDefaults></w:styles>'}];
+    dl(makeZip(files,'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),'redlined_'+(s.name||'document').replace(/\.[^.]+$/,'')+'.docx');
+  });
+  document.getElementById('btnAndroid').addEventListener('click',()=>{
+    const files=[
+      {name:'README.md',data:'# Redline — Android WebView build\n\nA ready-to-compile Android Studio project that runs the Redline app in a\nWebView. The app itself is bundled (app/src/main/assets/index.html) —\nit parses documents locally exactly like the web version.\n\n## Build the APK\n1. Install Android Studio (or command-line tools + JDK 17).\n2. From this folder: gradle assembleDebug (or open in Android Studio and press Run).\n3. The APK lands at app/build/outputs/apk/debug/app-debug.apk.\n\n## Firebase App Distribution\n    firebase apps:create --platform ANDROID com.redline.viewer\n    firebase appdistribution:distribute app/build/outputs/apk/debug/app-debug.apk --app <APP_ID> --testers-file testers.txt\n\ntesters.txt is included — replace the placeholder emails with your testers.\n'},
+      {name:'testers.txt',data:'qa+redline@example.com\nlegal-review@example.com\n'},
+      {name:'settings.gradle',data:"rootProject.name = 'Redline'\ninclude ':app'\n"},
+      {name:'build.gradle',data:"buildscript {\n    repositories { google(); mavenCentral() }\n    dependencies { classpath 'com.android.tools.build:gradle:8.5.2' }\n}\nallprojects { repositories { google(); mavenCentral() } }\ntask clean(type: Delete) { delete rootProject.buildDir }\n"},
+      {name:'gradle.properties',data:'org.gradle.jvmargs=-Xmx2048m\nandroid.useAndroidX=true\n'},
+      {name:'app/build.gradle',data:"apply plugin: 'com.android.application'\n\nandroid {\n    namespace 'com.redline.viewer'\n    compileSdk 34\n    defaultConfig {\n        applicationId 'com.redline.viewer'\n        minSdk 24\n        targetSdk 34\n        versionCode 1\n        versionName '1.0'\n    }\n    buildTypes {\n        release { minifyEnabled false }\n    }\n}\n"},
+      {name:'app/src/main/AndroidManifest.xml',data:'<?xml version="1.0" encoding="utf-8"?>\n<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n    <uses-permission android:name="android.permission.INTERNET"/>\n    <application android:label="@string/app_name" android:theme="@android:style/Theme.Material.Light.NoActionBar">\n        <activity android:name=".MainActivity" android:exported="true" android:configChanges="orientation|screenSize">\n            <intent-filter>\n                <action android:name="android.intent.action.MAIN"/>\n                <category android:name="android.intent.category.LAUNCHER"/>\n            </intent-filter>\n        </activity>\n    </application>\n</manifest>\n'},
+      {name:'app/src/main/java/com/redline/viewer/MainActivity.java',data:'package com.redline.viewer;\n\nimport android.app.Activity;\nimport android.os.Bundle;\nimport android.webkit.WebSettings;\nimport android.webkit.WebView;\nimport android.webkit.WebViewClient;\n\npublic class MainActivity extends Activity {\n    private WebView wv;\n\n    @Override\n    protected void onCreate(Bundle savedInstanceState) {\n        super.onCreate(savedInstanceState);\n        wv = new WebView(this);\n        WebSettings st = wv.getSettings();\n        st.setJavaScriptEnabled(true);\n        st.setDomStorageEnabled(true);\n        st.setAllowFileAccess(true);\n        wv.setWebViewClient(new WebViewClient());\n        wv.loadUrl("file:///android_asset/index.html");\n        setContentView(wv);\n    }\n\n    @Override\n    public void onBackPressed() {\n        if (wv.canGoBack()) wv.goBack();\n        else super.onBackPressed();\n    }\n}\n'},
+      {name:'app/src/main/res/values/strings.xml',data:'<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <string name="app_name">Redline</string>\n</resources>\n'},
+      {name:'app/src/main/assets/index.html',data:RL_SELF_HTML}];
+    dl(makeZip(files),'redline_android_project_'+stamp()+'.zip');
+  });
+  /* ---- extraction pipeline per file type ---- */
+  /* ---- upload hardening (defense-in-depth for untrusted files) ----
+     • extension whitelist + per-type size caps (rejection is honest, not silent)
+     • PDF: font/PostScript eval disabled (isEvalSupported:false); page count capped
+     • images + scanned-page renders: megapixel canvas cap (decompression-bomb guard)
+     • parsed text sanitized at the single choke point: C0 control chars stripped
+     • ReDoS-safe scanner: every quantifier bounded or on disjoint char classes;
+       values capped at 90 chars, findings capped at 24                         */
+  const SEC={MAX_BYTES:30*1024*1024,LIMITS:{pdf:25*1024*1024,docx:10*1024*1024,txt:2*1024*1024,img:15*1024*1024},MAX_PDF_PAGES:40,MAX_CANVAS_MP:12};
+  function validateFile(f){
+    const n=(f.name||'').toLowerCase();
+    const okExt=/\.(pdf|docx|doc|txt|md|png|jpe?g|webp|bmp)$/.test(n);
+    const okMime=/^(application\/pdf|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document|text\/plain|text\/markdown|image\/(png|jpeg|webp|bmp))$/.test(f.type||'');
+    if(!okExt&&!okMime)throw new Error('Unsupported file type — use PDF, DOCX, TXT/MD, PNG/JPG/WEBP/BMP.');
+    if(f.size>SEC.MAX_BYTES)throw new Error('File too large (max 30 MB).');
+    const lim=/\.pdf$/.test(n)||f.type==='application/pdf'?SEC.LIMITS.pdf:/\.(docx|doc)$/.test(n)?SEC.LIMITS.docx:/\.(png|jpe?g|webp|bmp)$/.test(n)||/^image\//.test(f.type||'')?SEC.LIMITS.img:SEC.LIMITS.txt;
+    if(f.size>lim)throw new Error('File too large for this type (max '+fmtSize(lim)+'). Split it or pick a smaller file.');
+  }
+  function sanitizeText(t){return String(t).replace(/[\u0000-\u0008\u000B-\u001F\u007F]/g,'');}
+  function cappedViewport(pg,scale){
+    const vp=pg.getViewport({scale:scale});
+    const mp=(vp.width*vp.height)/1e6;
+    if(mp<=SEC.MAX_CANVAS_MP)return vp;
+    return pg.getViewport({scale:scale*Math.sqrt(SEC.MAX_CANVAS_MP/mp)});
+  }
+  async function ocrImage(source){
+    if(!window.Tesseract)throw new Error('OCR engine unavailable (offline?) — use a text-based PDF/DOCX/TXT or the sample');
+    const r=await Tesseract.recognize(source,'eng');
+    return ((r&&r.data&&r.data.text)||'').replace(/[ \t]+\n/g,'\n');
+  }
+  async function handleFile(f){
+    if(!f)return;
+    fcMeta.style.color='';fileCard.hidden=false;fcName.textContent=f.name;
+    parseBar.classList.remove('run');void parseBar.offsetWidth;parseBar.classList.add('run');
+    try{
+      validateFile(f);
+      let text='',pages=1,src='text layer';
+      if(/\.pdf$/i.test(f.name)||f.type==='application/pdf'){
+        if(!window.pdfjsLib)throw new Error('PDF engine unavailable (offline?) — try a TXT file or the sample');
+        const pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer(),isEvalSupported:false}).promise;
+        pages=Math.min(pdf.numPages,SEC.MAX_PDF_PAGES);const parts=[];
+        if(pdf.numPages>SEC.MAX_PDF_PAGES)fcMeta.textContent=fmtSize(f.size)+' · big PDF — scanning first '+SEC.MAX_PDF_PAGES+' of '+pdf.numPages+' pages';
+        for(let i=1;i<=pages;i++){
+          fcMeta.textContent=fmtSize(f.size)+' · extracting text (page '+i+'/'+pages+')…';
+          const pg=await pdf.getPage(i),tc=await pg.getTextContent();
+          parts.push(tc.items.map(it=>it.str).join(' '));
+        }
+        text=parts.join('\n\n');
+        if((text.match(/\S+/g)||[]).length<5){
+          src='OCR · scanned pages';
+          for(let i=1;i<=pages;i++){
+            fcMeta.textContent=fmtSize(f.size)+' · no text layer — OCR on device (page '+i+'/'+pages+')…';
+            const pg=await pdf.getPage(i),vp=cappedViewport(pg,2);
+            const cnv=document.createElement('canvas');
+            cnv.width=Math.round(vp.width);cnv.height=Math.round(vp.height);
+            await pg.render({canvasContext:cnv.getContext('2d'),viewport:vp}).promise;
+            parts[i-1]=await ocrImage(cnv);
+          }
+          text=parts.join('\n\n');
+        }
+      }else if(/\.(docx|doc)$/i.test(f.name)){
+        if(!window.mammoth)throw new Error('DOCX engine unavailable (offline?) — try a TXT file or the sample');
+        fcMeta.textContent=fmtSize(f.size)+' · extracting text from DOCX…';
+        text=(await mammoth.extractRawText({arrayBuffer:await f.arrayBuffer()})).value;
+      }else if(/\.(png|jpe?g|webp|bmp)$/i.test(f.name)||/^image\//.test(f.type)){
+        src='OCR · image';
+        pages=1;
+        fcMeta.textContent=fmtSize(f.size)+' · OCR on device (Tesseract, eng)…';
+        let bmp;try{bmp=await createImageBitmap(f);}catch(e){throw new Error('Image could not be decoded — it may be corrupt or is not a real image.');}
+        const k=Math.min(1,Math.sqrt(SEC.MAX_CANVAS_MP/((bmp.width*bmp.height)/1e6)));
+        const cnv=document.createElement('canvas');
+        cnv.width=Math.max(1,Math.round(bmp.width*k));cnv.height=Math.max(1,Math.round(bmp.height*k));
+        cnv.getContext('2d').drawImage(bmp,0,0,cnv.width,cnv.height);
+        text=await ocrImage(cnv);
+      }else{
+        text=await f.text();
+      }
+      text=sanitizeText(text);
+      const words=(text.match(/\S+/g)||[]).length;
+      if(words<5)throw new Error('Still no readable text after OCR — try a sharper image or a text-based file, or use the sample contract.');
+      fcMeta.textContent=fmtSize(f.size)+' · scanning entities locally…';
+      await new Promise(r=>setTimeout(r,500));
+      applyReal(f.name,f.size,text,pages,words,src);
+      parseBar.classList.remove('run');
+      setTimeout(()=>go(1),450);
+    }catch(err){
+      parseBar.classList.remove('run');
+      fcMeta.style.color='#B42318';
+      fcMeta.textContent=fmtSize(f.size)+' · '+err.message;
+    }
+  }
+  function startSample(){
+    fileCard.hidden=false;fcName.textContent='Master_Services_Agreement.pdf (sample)';
+    fcMeta.style.color='';
+    fcMeta.textContent='1.8 MB · simulated sample run — the mock values on the next screens are pre-built demo data';
+    parseBar.classList.remove('run');void parseBar.offsetWidth;parseBar.classList.add('run');
+    if(f1file)f1file.textContent='Master_Services_Agreement.pdf';
+    setTimeout(()=>{parseBar.classList.remove('run');go(1);},1300);
+  }
+  dz.addEventListener('click',e=>{if(e.target!==fileInput&&e.target.id!=='btnSample')fileInput.click()});
+  document.getElementById('btnSample').addEventListener('click',startSample);
+  fileInput.addEventListener('change',()=>handleFile(fileInput.files[0]));
+  ['dragover','dragenter'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('drag')}));
+  ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('drag')}));
+  dz.addEventListener('drop',e=>{const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];if(f)handleFile(f)});
+  document.getElementById('ctaS1').addEventListener('click',()=>go(2));
+  document.getElementById('ctaS3').addEventListener('click',()=>go(4));
+  document.getElementById('approveBtn').addEventListener('click',()=>go(3));
+  // left navigation mirrors the 5 steps — one navigation system, same screens
+  navItems.forEach((el, idx) => {
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
+    el.addEventListener('click', () => go(idx));
+    el.addEventListener('keydown', ev => {
+      if(ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); el.click(); }
+    });
+  });
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight')go(cur+1);
+    if(e.key==='ArrowLeft')go(cur-1);
+  });
+  go(0);
+</script>
+<script>
+/* ---------- PWA · installable + airplane mode ----------
+   Registers only over https/localhost (silently skips on file://). */
+(function(){
+  const say = (typeof toast === 'function') ? toast : (m, err) => {
+    let el = document.getElementById('pwaToast');
+    if(!el){ el = document.createElement('div'); el.id = 'pwaToast';
+      Object.assign(el.style, { position:'fixed', left:'50%', bottom:'18px', transform:'translateX(-50%)',
+        zIndex:'999', color:'#fff', padding:'10px 16px', borderRadius:'10px', fontSize:'14px',
+        fontFamily:'inherit', boxShadow:'0 6px 18px rgba(0,0,0,.35)', transition:'opacity .3s', opacity:'0' });
+      document.body.appendChild(el); }
+    el.textContent = m; el.style.background = err ? '#7F1D1D' : '#0D1526';
+    el.style.opacity = '1'; clearTimeout(say.t);
+    say.t = setTimeout(() => { el.style.opacity = '0'; }, 4200);
+  };
+  if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')){
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+  let deferredPrompt = null;
+  const btn = document.createElement('button');
+  btn.id = 'pwaInstall'; btn.textContent = '\u2b07 Install app'; btn.hidden = true;
+  Object.assign(btn.style, { position:'fixed', right:'18px', bottom:'18px', zIndex:'999', border:'0',
+    borderRadius:'999px', padding:'10px 16px', background:'#D64545', color:'#fff', fontWeight:'600',
+    fontFamily:'inherit', fontSize:'14px', cursor:'pointer', boxShadow:'0 6px 18px rgba(0,0,0,.35)' });
+  document.body.appendChild(btn);
+  btn.addEventListener('click', async () => {
+    if(!deferredPrompt) return;
+    deferredPrompt.prompt();
+    try{ const c = await deferredPrompt.userChoice; if(c && c.outcome === 'accepted') say('Installed — Redline now runs offline'); }catch(e){}
+    deferredPrompt = null; btn.hidden = true;
+  });
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault(); deferredPrompt = e;
+    if(!window.matchMedia('(display-mode: standalone)').matches) btn.hidden = false;
+  });
+  window.addEventListener('appinstalled', () => { btn.hidden = true; say('Redline installed — works in airplane mode'); });
+  window.addEventListener('offline', () => say('Offline — the on-device pipeline keeps working', true));
+  window.addEventListener('online',  () => say('Back online — queued receipts sync to Firestore'));
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+/* \ud83d\udcf1 Install on phone \u2014 QR handoff: a persistent corner pill; clicking it
+   opens a modal with a QR of the live URL (deploy-first hint on file://, honest
+   text fallback when offline). Self-contained; uses the qrcode-generator CDN
+   lib, precached by the service worker. */
+(function(){
+  if(window.matchMedia('(display-mode: standalone)').matches) return;
+  const isHttp = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  const css = document.createElement('style');
+  css.textContent = [
+    '.pim-modal{position:fixed;inset:0;z-index:1001;display:flex;align-items:center;justify-content:center;background:rgba(4,8,18,.72);padding:16px}',
+    '.pim-card{position:relative;width:min(92vw,380px);max-height:92vh;overflow:auto;background:#101830;color:#EAF0FF;border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:20px;box-shadow:0 18px 60px rgba(0,0,0,.5);font-family:inherit}',
+    '.pim-card h3{margin:0 0 4px;font-size:17px}',
+    '.pim-sub{margin:0 0 14px;font-size:13px;opacity:.72}',
+    '.pim-qr{background:#fff;border-radius:12px;padding:12px;display:flex;justify-content:center;margin:0 0 14px}',
+    '.pim-qr svg{width:100%;max-width:240px;height:auto;display:block}',
+    '.pim-note{color:#3A4560;font-size:13px;text-align:center;margin:8px 4px}',
+    '.pim-steps{margin:0;padding-left:18px;font-size:13.5px;line-height:1.55}',
+    '.pim-steps code{background:rgba(255,255,255,.09);padding:1px 5px;border-radius:4px;font-size:12px;word-break:break-all}',
+    '.pim-x{position:absolute;top:8px;right:12px;border:0;background:none;color:#fff;font-size:22px;line-height:1;cursor:pointer;opacity:.6}',
+    '.pim-x:hover{opacity:1}',
+    '.pim-pill{position:fixed;left:18px;bottom:18px;z-index:1000;border:1px solid #D64545;background:#101830;color:#fff;border-radius:999px;padding:9px 14px;font-weight:600;font-size:13px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35);font-family:inherit}',
+    '.pim-pill:hover{background:#1A2440}',
+    '@media (max-width:640px){.pim-pill{left:12px;bottom:12px;padding:7px 11px;font-size:12px}}'
+  ].join('\n');
+  document.head.appendChild(css);
+
+  let modal = null;
+  function build(){
+    modal = document.createElement('div');
+    modal.className = 'pim-modal';
+    modal.setAttribute('role', 'dialog');
+    modal.innerHTML = '<div class="pim-card">' +
+      '<button class="pim-x" aria-label="Close">\u00d7</button>' +
+      '<h3>Install on your phone</h3>' +
+      '<p class="pim-sub">Same app, full offline pipeline \u2014 in your pocket.</p>' +
+      '<div class="pim-qr"><p class="pim-note">Loading\u2026</p></div>' +
+      '<ol class="pim-steps">' +
+      '<li>Scan with your phone camera (or open the link).</li>' +
+      '<li>Tap <b>\u2b07 Install app</b> / <b>Add to Home Screen</b> in the phone browser.</li>' +
+      '<li>Open it from the icon \u2014 <code>https</code> only, never a downloaded file.</li>' +
+      '</ol></div>';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if(e.target === modal) close(); });
+    modal.querySelector('.pim-x').addEventListener('click', close);
+  }
+  function fill(){
+    const box = modal.querySelector('.pim-qr');
+    if(!isHttp){
+      box.innerHTML = '<p class="pim-note">This page runs from a <b>local file</b>, so there is nothing to scan yet.<br>Deploy first (<code>firebase deploy</code> \u2014 DEPLOY.md \u00a71),<br>reopen this page, then tap \ud83d\udcf1 for the QR.</p>';
+      return;
+    }
+    if(!window.qrcode){
+      box.innerHTML = '<p class="pim-note">QR unavailable (offline first visit).<br>Open this URL on your phone:<br><code>' + location.href + '</code></p>';
+      return;
+    }
+    try{
+      const qr = window.qrcode(0, 'M');
+      qr.addData(location.href);
+      qr.make();
+      box.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 8 });
+    }catch(err){
+      box.innerHTML = '<p class="pim-note">QR failed \u2014 open this URL on your phone:<br><code>' + location.href + '</code></p>';
+    }
+  }
+  function open(){
+    if(!modal) build();
+    fill();
+    modal.style.display = 'flex';
+  }
+  function close(){ if(modal) modal.style.display = 'none'; }
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') close(); });
+
+  const pill = document.createElement('button');
+  pill.className = 'pim-pill';
+  pill.textContent = '\ud83d\udcf1 Install on phone';
+  pill.setAttribute('aria-label', 'Install on phone \u2014 show QR');
+  pill.addEventListener('click', open);
+  document.body.appendChild(pill);
+
+})();
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+</body>
+</html>

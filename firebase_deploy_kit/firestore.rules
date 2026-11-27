@@ -1,0 +1,32 @@
+rules_version = '2';
+
+// Redline security model (build plan §4.6):
+// Firestore stores ONLY matter metadata, the findings INDEX and trust receipts.
+// Document text never reaches Firestore — it is parsed, redacted and restored
+// entirely on device, so these rules guard metadata, not confidential content.
+
+service cloud.firestore {
+
+  function isOwner(uid) {
+    return request.auth != null && request.auth.uid == uid;
+  }
+
+  match /databases/{database}/documents {
+
+    // Matter metadata + findings index (owner-scoped workspace)
+    match /users/{uid}/matters/{matterId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // Trust receipts: append-only audit log — reads and creates only.
+    // No update, no delete: a receipt, once written, is tamper-evident.
+    match /users/{uid}/receipts/{receiptId} {
+      allow read, create: if isOwner(uid);
+    }
+
+    // Default deny for everything else (collections, cross-user paths, admin docs)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

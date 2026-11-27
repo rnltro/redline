@@ -1,0 +1,32 @@
+# Firebase App Hosting configuration for the Redline Next.js app.
+# Docs: https://firebase.google.com/docs/app-hosting/configure-cloud-run
+# This file lives at the repo root next to package.json; App Hosting picks it
+# up automatically on every rollout (GitHub-connected backends).
+
+runConfig:
+  minInstances: 0        # scale to zero between judge visits
+  maxInstances: 4
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+
+env:
+  # Firebase web config — safe to expose (guarded by App Check + Firestore rules)
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: REPLACE_ME
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: REPLACE_ME
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: REPLACE_ME
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_APP_CHECK_SITE_KEY
+    value: REPLACE_ME
+    availability: [BUILD, RUNTIME]
+
+  # Server-only credentials must be secrets, never plaintext env vars:
+  #   firebase apphosting:secrets:set GEMINI_API_KEY
+  - variable: GEMINI_API_KEY
+    secret: GEMINI_API_KEY
+    availability: [RUNTIME]
