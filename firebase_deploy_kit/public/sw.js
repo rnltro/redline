@@ -2,7 +2,7 @@
    Redline service worker — installable PWA + airplane mode.
 
    Strategy:
-   • install  → precache the app shell + the five CDN libraries
+   • install  → precache the app shell + the four CDN libraries
      (pdf.js, mammoth, tesseract) so the FIRST offline visit works.
    • fetch    → stale-while-revalidate for CDN hosts (jsdelivr,
      cdnjs, tessdata, gstatic) — after one online OCR pass the
@@ -13,7 +13,7 @@
      degrades honestly (on-device pipeline / queued receipts).
    • Bump VERSION to ship an update; old caches are purged on activate.
    ================================================================ */
-const VERSION = 'redline-v1.3';
+const VERSION = 'redline-v1.2';
 const SHELL   = `${VERSION}-shell`;
 const RUNTIME = `${VERSION}-runtime`;
 
@@ -24,8 +24,7 @@ const PRECACHE = [
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js',
-  'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js'
+  'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js'
 ];
 
 /* stale-while-revalidate: cached copy first, refresh in background */
